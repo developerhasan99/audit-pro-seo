@@ -75,7 +75,7 @@ const startServer = async (): Promise<void> => {
 ║                                                            ║
 ║   Environment: ${config.env.padEnd(37)}                    ║
 ║   Server URL:  ${config.server.url.padEnd(37)}             ║
-║   Port:        ${config.server.port.toString().padEnd(37)} ║
+║   Port:        ${config.server.port.toString().padEnd(37)}        ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
       `);
