@@ -8,6 +8,13 @@
       "when": 1766741476977,
       "tag": "0000_thick_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766763214043,
+      "tag": "0001_gigantic_the_executioner",
+      "breakpoints": true
     }
   ]
 }
