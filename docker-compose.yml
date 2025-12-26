@@ -6,9 +6,9 @@ services:
     container_name: audit-pro-seo-db
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=auditproseo
-      - MYSQL_USER=auditproseo
-      - MYSQL_PASSWORD=auditproseo
+      - MYSQL_DATABASE=audit_pro_seo
+      - MYSQL_USER=audit_pro_seo
+      - MYSQL_PASSWORD=audit_pro_seo
     ports:
       - "3306:3306"
     volumes:
@@ -34,9 +34,9 @@ services:
       - NODE_ENV=production
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_NAME=auditproseo
-      - DB_USER=auditproseo
-      - DB_PASSWORD=auditproseo
+      - DB_NAME=audit_pro_seo
+      - DB_USER=audit_pro_seo
+      - DB_PASSWORD=audit_pro_seo
       - PORT=3000
       - SESSION_SECRET=change-this-in-production
       - CORS_ORIGIN=http://localhost:5173
