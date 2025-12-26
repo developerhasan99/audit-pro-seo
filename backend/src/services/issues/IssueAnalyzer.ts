@@ -1,5 +1,5 @@
 import { db } from '../../db';
-import { pageReports, issues } from '../../db/schema';
+import { pageReports, issues, PageReport } from '../../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { Rule, GlobalRule } from './rules/Rule';
 import { Status30xRule, Status40xRule, Status50xRule } from './rules/StatusRules';
@@ -67,7 +67,7 @@ export class IssueAnalyzer {
     new DuplicateContentRule(),
   ];
 
-  analyze(pageReport: any): number[] {
+  analyze(pageReport: PageReport): number[] {
     const issuesFound: number[] = [];
 
     for (const rule of this.rules) {

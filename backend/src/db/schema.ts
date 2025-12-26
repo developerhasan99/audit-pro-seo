@@ -211,3 +211,11 @@ export const issuesRelations = relations(issues, ({ one }) => ({
   crawl: one(crawls, { fields: [issues.crawlId], references: [crawls.id] }),
   type: one(issueTypes, { fields: [issues.issueTypeId], references: [issueTypes.id] }),
 }));
+
+// Inferred types
+export type User = typeof users.$inferSelect;
+export type Project = typeof projects.$inferSelect;
+export type Crawl = typeof crawls.$inferSelect;
+export type PageReport = typeof pageReports.$inferSelect;
+export type Issue = typeof issues.$inferSelect;
+export type IssueType = typeof issueTypes.$inferSelect;

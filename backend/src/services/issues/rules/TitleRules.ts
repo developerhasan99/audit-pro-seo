@@ -1,5 +1,5 @@
 import { Rule } from './Rule';
-import PageReport from '../../../models/PageReport';
+import { PageReport } from '../../../db/schema';
 import { IssueTypes } from '../IssueAnalyzer';
 
 export class EmptyTitleRule extends Rule {

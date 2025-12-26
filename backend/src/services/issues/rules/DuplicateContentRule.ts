@@ -1,5 +1,5 @@
 import { GlobalRule } from './Rule';
-import PageReport from '../../../models/PageReport';
+import { PageReport } from '../../../db/schema';
 
 export class DuplicateContentRule extends GlobalRule {
   name = 'Duplicate Content';

@@ -1,4 +1,4 @@
-import PageReport from '../../../models/PageReport';
+import { PageReport } from '../../../db/schema';
 
 export interface RuleResult {
   issueTypeId: number;
