@@ -6,7 +6,6 @@ import morgan from "morgan";
 import session from "express-session";
 import { createServer } from "http";
 import config from "./config";
-import { connectDatabase } from "./database";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { initWsServer } from "./websocket/server";
@@ -60,9 +59,6 @@ app.use(errorHandler);
 // Start server
 const startServer = async (): Promise<void> => {
   try {
-    // Connect to database
-    await connectDatabase();
-
     // Initialize WebSocket server
     initWsServer(httpServer);
 

@@ -3,11 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 interface DatabaseConfig {
-  host: string;
-  port: number;
-  database: string;
-  user: string;
-  password: string;
+  url: string;
 }
 
 interface ServerConfig {
@@ -44,11 +40,7 @@ const config: Config = {
   env: process.env.NODE_ENV || "development",
 
   database: {
-    host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT || "3306", 10),
-    database: process.env.DB_NAME || "audit_pro_seo",
-    user: process.env.DB_USER || "audit_pro_seo",
-    password: process.env.DB_PASSWORD || "audit_pro_seo",
+    url: process.env.DATABASE_URL || "postgres://audit_pro_seo:audit_pro_seo@localhost:5432/audit_pro_seo",
   },
 
   server: {

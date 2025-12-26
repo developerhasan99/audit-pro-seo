@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { projects, crawls, pageReports } from '../db/schema';
+import { eq, and, desc, count, like, asc } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { Project, Crawl, PageReport } from '../models';
-import { Op } from 'sequelize';
 
 const router = Router();
 
@@ -11,15 +12,15 @@ router.use(authMiddleware);
 
 // URL Explorer - search and browse crawled URLs
 router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
   const { search, page = 1, limit = 50 } = req.query;
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -27,9 +28,9 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {
@@ -42,32 +43,44 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  // Build query
-  const where: any = { crawlId: latestCrawl.id };
+  // Build where clause
+  const pageLimit = parseInt(limit as string);
+  const pageNumber = parseInt(page as string);
+  const offsetValue = (pageNumber - 1) * pageLimit;
   
-  // Add search filter if provided
-  if (search && typeof search === 'string') {
-    where.url = {
-      [Op.like]: `%${search}%`,
-    };
-  }
+  const searchFilter = search && typeof search === 'string' ? like(pageReports.url, `%${search}%`) : undefined;
+  const whereClause = searchFilter 
+    ? and(eq(pageReports.crawlId, latestCrawl.id), searchFilter)
+    : eq(pageReports.crawlId, latestCrawl.id);
 
   // Get page reports with pagination
-  const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
-  
-  const { count, rows: pageReports } = await PageReport.findAndCountAll({
-    where,
-    attributes: ['id', 'url', 'statusCode', 'title', 'description', 'h1', 'words'],
-    limit: parseInt(limit as string),
-    offset,
-    order: [['url', 'ASC']],
+  const reports = await db.query.pageReports.findMany({
+    where: whereClause,
+    columns: {
+      id: true,
+      url: true,
+      statusCode: true,
+      title: true,
+      description: true,
+      h1: true,
+      words: true,
+    },
+    limit: pageLimit,
+    offset: offsetValue,
+    orderBy: [asc(pageReports.url)],
   });
 
+  // Get total count
+  const [totalCountResult] = await db
+    .select({ value: count() })
+    .from(pageReports)
+    .where(whereClause);
+
   res.json({
-    pageReports,
-    total: count,
-    page: parseInt(page as string),
-    limit: parseInt(limit as string),
+    pageReports: reports,
+    total: totalCountResult.value,
+    page: pageNumber,
+    limit: pageLimit,
     search: search || '',
   });
 }));

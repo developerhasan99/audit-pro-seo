@@ -1,7 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { User } from '../models';
+import { db } from '../db';
+import { users } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
+import { hashPassword, comparePassword } from '../utils/auth';
 
 const router = Router();
 
@@ -14,23 +17,30 @@ router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Check if user already exists
-  const existingUser = await User.findOne({ where: { email } });
+  const existingUser = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
   if (existingUser) {
     throw new AppError('User already exists', 400);
   }
 
   // Create user
-  const user = await User.create({ email, password });
+  const hashedPassword = await hashPassword(password);
+  const [newUser] = await db.insert(users).values({
+    email,
+    password: hashedPassword,
+  }).returning();
 
   // Set session
-  (req.session as any).userId = user.id;
-  (req.session as any).userEmail = user.email;
+  (req.session as any).userId = newUser.id;
+  (req.session as any).userEmail = newUser.email;
 
   res.status(201).json({
     message: 'User created successfully',
     user: {
-      id: user.id,
-      email: user.email,
+      id: newUser.id,
+      email: newUser.email,
     },
   });
 }));
@@ -44,13 +54,16 @@ router.post('/signin', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find user
-  const user = await User.findOne({ where: { email } });
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
   if (!user) {
     throw new AppError('Invalid credentials', 401);
   }
 
   // Check password
-  const isPasswordValid = await user.comparePassword(password);
+  const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
     throw new AppError('Invalid credentials', 401);
   }
@@ -82,8 +95,15 @@ router.post('/signout', authMiddleware, asyncHandler(async (req: Request, res: R
 
 // Get current user
 router.get('/me', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findByPk(req.user!.id, {
-    attributes: ['id', 'email', 'lang', 'theme', 'created'],
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, req.user!.id),
+    columns: {
+      id: true,
+      email: true,
+      lang: true,
+      theme: true,
+      created: true,
+    },
   });
 
   if (!user) {
@@ -97,24 +117,26 @@ router.get('/me', authMiddleware, asyncHandler(async (req: Request, res: Respons
 router.put('/profile', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
   const { email, lang, theme } = req.body;
   
-  const user = await User.findByPk(req.user!.id);
-  if (!user) {
+  const [updatedUser] = await db.update(users)
+    .set({
+      ...(email && { email }),
+      ...(lang && { lang }),
+      ...(theme && { theme }),
+    })
+    .where(eq(users.id, req.user!.id))
+    .returning();
+
+  if (!updatedUser) {
     throw new AppError('User not found', 404);
   }
-
-  if (email) user.email = email;
-  if (lang) user.lang = lang;
-  if (theme) user.theme = theme;
-
-  await user.save();
 
   res.json({
     message: 'Profile updated successfully',
     user: {
-      id: user.id,
-      email: user.email,
-      lang: user.lang,
-      theme: user.theme,
+      id: updatedUser.id,
+      email: updatedUser.email,
+      lang: updatedUser.lang,
+      theme: updatedUser.theme,
     },
   });
 }));
@@ -127,34 +149,40 @@ router.put('/password', authMiddleware, asyncHandler(async (req: Request, res: R
     throw new AppError('Current password and new password are required', 400);
   }
 
-  const user = await User.findByPk(req.user!.id);
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, req.user!.id),
+  });
+
   if (!user) {
     throw new AppError('User not found', 404);
   }
 
   // Verify current password
-  const isPasswordValid = await user.comparePassword(currentPassword);
+  const isPasswordValid = await comparePassword(currentPassword, user.password);
   if (!isPasswordValid) {
     throw new AppError('Current password is incorrect', 401);
   }
 
   // Update password
-  user.password = newPassword;
-  await user.save();
+  const hashedPassword = await hashPassword(newPassword);
+  await db.update(users)
+    .set({ password: hashedPassword })
+    .where(eq(users.id, req.user!.id));
 
   res.json({ message: 'Password changed successfully' });
 }));
 
 // Delete account
 router.delete('/account', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  const user = await User.findByPk(req.user!.id);
+  // Mark user as deleting (soft delete)
+  const [user] = await db.update(users)
+    .set({ deleting: true })
+    .where(eq(users.id, req.user!.id))
+    .returning();
+
   if (!user) {
     throw new AppError('User not found', 404);
   }
-
-  // Mark user as deleting (soft delete)
-  user.deleting = true;
-  await user.save();
 
   // Destroy session
   req.session.destroy((err) => {

@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { projects, crawls, pageReports } from '../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { Project, Crawl, PageReport } from '../models';
 import { createObjectCsvStringifier } from 'csv-writer';
 
 const router = Router();
@@ -11,15 +13,14 @@ router.use(authMiddleware);
 
 // Export page reports as CSV
 router.get('/csv/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
-  // const { issueType } = req.query; // Not used in currently implemented CSV export
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -27,22 +28,27 @@ router.get('/csv/:projectId', asyncHandler(async (req: Request, res: Response) =
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {
     throw new AppError('No crawl found', 404);
   }
 
-  // Build query
-  const where: any = { crawlId: latestCrawl.id };
-  
   // Get page reports
-  const pageReports = await PageReport.findAll({
-    where,
-    attributes: ['url', 'statusCode', 'title', 'description', 'h1', 'words', 'size'],
+  const reports = await db.query.pageReports.findMany({
+    where: eq(pageReports.crawlId, latestCrawl.id),
+    columns: {
+      url: true,
+      statusCode: true,
+      title: true,
+      description: true,
+      h1: true,
+      words: true,
+      size: true,
+    },
   });
 
   // Create CSV
@@ -58,7 +64,7 @@ router.get('/csv/:projectId', asyncHandler(async (req: Request, res: Response) =
     ],
   });
 
-  const records = pageReports.map(pr => ({
+  const records = reports.map(pr => ({
     url: pr.url,
     statusCode: pr.statusCode,
     title: pr.title || '',
@@ -77,14 +83,14 @@ router.get('/csv/:projectId', asyncHandler(async (req: Request, res: Response) =
 
 // Export sitemap
 router.get('/sitemap/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -92,9 +98,9 @@ router.get('/sitemap/:projectId', asyncHandler(async (req: Request, res: Respons
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {
@@ -102,19 +108,21 @@ router.get('/sitemap/:projectId', asyncHandler(async (req: Request, res: Respons
   }
 
   // Get successful page reports
-  const pageReports = await PageReport.findAll({
-    where: {
-      crawlId: latestCrawl.id,
-      statusCode: 200,
+  const reports = await db.query.pageReports.findMany({
+    where: and(
+      eq(pageReports.crawlId, latestCrawl.id),
+      eq(pageReports.statusCode, 200)
+    ),
+    columns: {
+      url: true,
     },
-    attributes: ['url'],
   });
 
   // Generate sitemap XML
   let sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n';
   sitemap += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
   
-  for (const pr of pageReports) {
+  for (const pr of reports) {
     sitemap += '  <url>\n';
     sitemap += `    <loc>${pr.url}</loc>\n`;
     sitemap += '  </url>\n';
@@ -129,15 +137,15 @@ router.get('/sitemap/:projectId', asyncHandler(async (req: Request, res: Respons
 
 // Export resources (images, scripts, etc.)
 router.get('/resources/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
   const { type } = req.query; // images, scripts, styles, etc.
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -145,9 +153,9 @@ router.get('/resources/:projectId', asyncHandler(async (req: Request, res: Respo
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {

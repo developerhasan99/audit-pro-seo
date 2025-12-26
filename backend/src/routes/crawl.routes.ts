@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { projects } from '../db/schema';
+import { eq, and } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { crawlerService } from '../services/CrawlerService';
-import { Project } from '../models';
 
 const router = Router();
 
@@ -11,14 +13,14 @@ router.use(authMiddleware);
 
 // Start crawl
 router.post('/start/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -26,7 +28,7 @@ router.post('/start/:projectId', asyncHandler(async (req: Request, res: Response
   }
 
   try {
-    const crawlId = await crawlerService.startCrawl(parseInt(projectId));
+    const crawlId = await crawlerService.startCrawl(projectId);
     
     res.json({
       message: 'Crawl started successfully',
@@ -39,21 +41,21 @@ router.post('/start/:projectId', asyncHandler(async (req: Request, res: Response
 
 // Stop crawl
 router.post('/stop/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
     throw new AppError('Project not found', 404);
   }
 
-  await crawlerService.stopCrawl(parseInt(projectId));
+  await crawlerService.stopCrawl(projectId);
 
   res.json({
     message: 'Crawl stopped successfully',
@@ -62,21 +64,21 @@ router.post('/stop/:projectId', asyncHandler(async (req: Request, res: Response)
 
 // Get crawl status
 router.get('/status/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
     throw new AppError('Project not found', 404);
   }
 
-  const status = crawlerService.getCrawlStatus(parseInt(projectId));
+  const status = crawlerService.getCrawlStatus(projectId);
 
   if (!status) {
     res.json({

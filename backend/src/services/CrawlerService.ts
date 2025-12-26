@@ -1,5 +1,7 @@
 import { Crawler, CrawlerOptions, ResponseMessage } from '../crawler/Crawler';
-import { Project, Crawl, PageReport, Issue, Link, ExternalLink, Image, Video, Script, Style } from '../models';
+import { db } from '../db';
+import { projects, crawls, pageReports, issues, links, externalLinks, images, videos, scripts, styles } from '../db/schema';
+import { eq, count } from 'drizzle-orm';
 import { IssueAnalyzer } from './issues/IssueAnalyzer';
 import { Broker, EventType } from '../websocket/broker';
 
@@ -8,7 +10,10 @@ export class CrawlerService {
 
   async startCrawl(projectId: number): Promise<number> {
     // Get project
-    const project = await Project.findByPk(projectId);
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+    });
+    
     if (!project) {
       throw new Error('Project not found');
     }
@@ -19,10 +24,10 @@ export class CrawlerService {
     }
 
     // Create crawl record
-    const crawl = await Crawl.create({
+    const [newCrawl] = await db.insert(crawls).values({
       projectId,
       start: new Date(),
-    });
+    }).returning();
 
     // Setup crawler options
     const options: CrawlerOptions = {
@@ -44,13 +49,13 @@ export class CrawlerService {
 
     // Setup event handlers
     crawler.on('response', async (response: ResponseMessage) => {
-      await this.handleResponse(crawl.id, response);
+      await this.handleResponse(newCrawl.id, response);
       
       // Publish progress
       const status = crawler.getStatus();
       Broker.publish(EventType.CRAWL_PROGRESS, {
         projectId,
-        crawlId: crawl.id,
+        crawlId: newCrawl.id,
         ...status,
         lastUrl: response.url.href,
       });
@@ -58,20 +63,22 @@ export class CrawlerService {
 
     crawler.on('complete', async (status) => {
       // Update crawl record
-      await crawl.update({
-        end: new Date(),
-        totalUrls: status.crawled,
-        robotstxtExists: crawler.robotstxtExists(),
-        sitemapExists: crawler.sitemapExists(),
-      });
+      await db.update(crawls)
+        .set({
+          end: new Date(),
+          totalUrls: status.crawled,
+          robotstxtExists: crawler.robotstxtExists(),
+          sitemapExists: crawler.sitemapExists(),
+        })
+        .where(eq(crawls.id, newCrawl.id));
 
       // Analyze issues
-      await this.analyzeIssues(crawl.id);
+      await this.analyzeIssues(newCrawl.id);
 
       // Publish completion
       Broker.publish(EventType.CRAWL_COMPLETED, {
         projectId,
-        crawlId: crawl.id,
+        crawlId: newCrawl.id,
         status,
       });
 
@@ -83,7 +90,7 @@ export class CrawlerService {
       console.error('Crawler error:', error);
       Broker.publish(EventType.CRAWL_STOPPED, {
         projectId,
-        crawlId: crawl.id,
+        crawlId: newCrawl.id,
         error: error.message,
       });
       this.activeCrawlers.delete(projectId);
@@ -92,7 +99,7 @@ export class CrawlerService {
     // Publish start
     Broker.publish(EventType.CRAWL_STARTED, {
       projectId,
-      crawlId: crawl.id,
+      crawlId: newCrawl.id,
     });
 
     // Start crawling
@@ -100,7 +107,7 @@ export class CrawlerService {
       console.error('Crawler start error:', error);
     });
 
-    return crawl.id;
+    return newCrawl.id;
   }
 
   async stopCrawl(projectId: number): Promise<void> {
@@ -127,7 +134,7 @@ export class CrawlerService {
 
       if (!parsedPage) {
         // Handle non-HTML or error responses
-        const pr = await PageReport.create({
+        const [pr] = await db.insert(pageReports).values({
           crawlId,
           url: url.href,
           scheme: url.protocol.replace(':', ''),
@@ -138,11 +145,11 @@ export class CrawlerService {
           inSitemap,
           ttfb,
           crawled: true,
-        });
+        }).returning();
         pageReportId = pr.id;
       } else {
         // Create page report
-        const pageReport = await PageReport.create({
+        const [pr] = await db.insert(pageReports).values({
           crawlId,
           url: parsedPage.url,
           scheme: parsedPage.scheme,
@@ -168,89 +175,77 @@ export class CrawlerService {
           timeout,
           ttfb,
           crawled: true,
-        });
-        pageReportId = pageReport.id;
+        }).returning();
+        pageReportId = pr.id;
 
         // Store links
-        if (parsedPage.links) {
-          for (const link of parsedPage.links) {
-            await Link.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: link.url,
-              scheme: link.scheme,
-              rel: link.rel,
-              text: link.text,
-              urlHash: this.generateHash(link.url),
-              nofollow: link.nofollow,
-              sponsored: link.sponsored,
-              ugc: link.ugc,
-            });
-          }
+        if (parsedPage.links && parsedPage.links.length > 0) {
+          await db.insert(links).values(parsedPage.links.map(link => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: link.url,
+            scheme: link.scheme,
+            rel: link.rel,
+            text: link.text,
+            urlHash: this.generateHash(link.url),
+            nofollow: link.nofollow,
+            sponsored: link.sponsored,
+            ugc: link.ugc,
+          })));
         }
 
         // Store external links
-        if (parsedPage.externalLinks) {
-          for (const link of parsedPage.externalLinks) {
-            await ExternalLink.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: link.url,
-              scheme: link.scheme,
-              rel: link.rel,
-              text: link.text,
-              urlHash: this.generateHash(link.url),
-              nofollow: link.nofollow,
-              sponsored: link.sponsored,
-              ugc: link.ugc,
-            });
-          }
+        if (parsedPage.externalLinks && parsedPage.externalLinks.length > 0) {
+          await db.insert(externalLinks).values(parsedPage.externalLinks.map(link => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: link.url,
+            scheme: link.scheme || null,
+            rel: link.rel,
+            text: link.text,
+            urlHash: this.generateHash(link.url),
+            nofollow: link.nofollow,
+            sponsored: link.sponsored,
+            ugc: link.ugc,
+          })));
         }
 
         // Store images
-        if (parsedPage.images) {
-          for (const img of parsedPage.images) {
-            await Image.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: img.url,
-              alt: img.alt,
-            });
-          }
+        if (parsedPage.images && parsedPage.images.length > 0) {
+          await db.insert(images).values(parsedPage.images.map(img => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: img.url,
+            alt: img.alt,
+          })));
         }
 
         // Store scripts
-        if (parsedPage.scripts) {
-          for (const script of parsedPage.scripts) {
-            await Script.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: script.url,
-            });
-          }
+        if (parsedPage.scripts && parsedPage.scripts.length > 0) {
+          await db.insert(scripts).values(parsedPage.scripts.map(script => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: script.url,
+          })));
         }
 
         // Store styles
-        if (parsedPage.styles) {
-          for (const style of parsedPage.styles) {
-            await Style.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: style.url,
-            });
-          }
+        if (parsedPage.styles && parsedPage.styles.length > 0) {
+          await db.insert(styles).values(parsedPage.styles.map(style => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: style.url,
+          })));
         }
 
         // Store videos
-        if (parsedPage.videos) {
-          for (const video of parsedPage.videos) {
-            await Video.create({
-              pagereportId: pageReportId,
-              crawlId,
-              url: video.url,
-              poster: video.poster,
-            });
-          }
+        if (parsedPage.videos && parsedPage.videos.length > 0) {
+          await db.insert(videos).values(parsedPage.videos.map(video => ({
+            pagereportId: pageReportId,
+            crawlId,
+            url: video.url,
+            poster: video.poster,
+          })));
         }
       }
     } catch (error) {
@@ -258,36 +253,35 @@ export class CrawlerService {
     }
   }
 
-
-
   private async analyzeIssues(crawlId: number): Promise<void> {
     try {
       // Get all page reports for this crawl
-      const pageReports = await PageReport.findAll({
-        where: { crawlId },
+      const reports = await db.query.pageReports.findMany({
+        where: eq(pageReports.crawlId, crawlId),
       });
 
       const analyzer = new IssueAnalyzer();
       
-      for (const pageReport of pageReports) {
-        const issues = analyzer.analyze(pageReport);
+      for (const report of reports) {
+        const foundIssues = analyzer.analyze(report as any);
         
         // Create issue records
-        for (const issueTypeId of issues) {
-          await Issue.create({
-            pagereportId: pageReport.id,
+        if (foundIssues.length > 0) {
+          await db.insert(issues).values(foundIssues.map(issueTypeId => ({
+            pagereportId: report.id,
             crawlId,
             issueTypeId,
-          });
+          })));
         }
       }
 
       // Update total issues count
-      const totalIssues = await Issue.count({ where: { crawlId } });
-      await Crawl.update(
-        { totalIssues, issuesEnd: new Date() },
-        { where: { id: crawlId } }
-      );
+      const result = await db.select({ value: count() }).from(issues).where(eq(issues.crawlId, crawlId));
+      const totalIssuesCount = result[0].value;
+      
+      await db.update(crawls)
+        .set({ totalIssues: totalIssuesCount, issuesEnd: new Date() })
+        .where(eq(crawls.id, crawlId));
 
     } catch (error) {
       console.error('Error analyzing issues:', error);

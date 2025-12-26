@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { Project, Crawl } from '../models';
+import { db } from '../db';
+import { projects, crawls } from '../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -10,36 +12,34 @@ router.use(authMiddleware);
 
 // Get all projects for current user
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
-  const projects = await Project.findAll({
-    where: { userId: req.user!.id },
-    include: [
-      {
-        model: Crawl,
-        as: 'crawls',
+  const userProjects = await db.query.projects.findMany({
+    where: eq(projects.userId, req.user!.id),
+    with: {
+      crawls: {
         limit: 1,
-        order: [['start', 'DESC']],
+        orderBy: [desc(crawls.start)],
       },
-    ],
-    order: [['created', 'DESC']],
+    },
+    orderBy: [desc(projects.created)],
   });
 
-  res.json({ projects });
+  res.json({ projects: userProjects });
 }));
 
 // Get single project
 router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const project = await Project.findOne({
-    where: {
-      id: req.params.id,
-      userId: req.user!.id,
-    },
-    include: [
-      {
-        model: Crawl,
-        as: 'crawls',
-        order: [['start', 'DESC']],
+  const projectId = parseInt(req.params.id);
+  
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
+    with: {
+      crawls: {
+        orderBy: [desc(crawls.start)],
       },
-    ],
+    },
   });
 
   if (!project) {
@@ -68,38 +68,29 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('URL is required', 400);
   }
 
-  const project = await Project.create({
+  const [newProject] = await db.insert(projects).values({
     userId: req.user!.id,
     url,
-    ignoreRobotstxt: ignoreRobotstxt || false,
-    followNofollow: followNofollow || false,
-    includeNoindex: includeNoindex || false,
-    crawlSitemap: crawlSitemap || false,
-    allowSubdomains: allowSubdomains || false,
-    basicAuth: basicAuth || false,
-    checkExternalLinks: checkExternalLinks || false,
-    archive: archive || false,
-    userAgent: userAgent || null,
-  });
+    ignoreRobotstxt: ignoreRobotstxt ?? false,
+    followNofollow: followNofollow ?? false,
+    includeNoindex: includeNoindex ?? false,
+    crawlSitemap: crawlSitemap ?? false,
+    allowSubdomains: allowSubdomains ?? false,
+    basicAuth: basicAuth ?? false,
+    checkExternalLinks: checkExternalLinks ?? false,
+    archive: archive ?? false,
+    userAgent: userAgent ?? null,
+  }).returning();
 
   res.status(201).json({
     message: 'Project created successfully',
-    project,
+    project: newProject,
   });
 }));
 
 // Update project
 router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const project = await Project.findOne({
-    where: {
-      id: req.params.id,
-      userId: req.user!.id,
-    },
-  });
-
-  if (!project) {
-    throw new AppError('Project not found', 404);
-  }
+  const projectId = parseInt(req.params.id);
 
   const {
     url,
@@ -114,44 +105,50 @@ router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
     userAgent,
   } = req.body;
 
-  if (url) project.url = url;
-  if (ignoreRobotstxt !== undefined) project.ignoreRobotstxt = ignoreRobotstxt;
-  if (followNofollow !== undefined) project.followNofollow = followNofollow;
-  if (includeNoindex !== undefined) project.includeNoindex = includeNoindex;
-  if (crawlSitemap !== undefined) project.crawlSitemap = crawlSitemap;
-  if (allowSubdomains !== undefined) project.allowSubdomains = allowSubdomains;
-  if (basicAuth !== undefined) project.basicAuth = basicAuth;
-  if (checkExternalLinks !== undefined) project.checkExternalLinks = checkExternalLinks;
-  if (archive !== undefined) project.archive = archive;
-  if (userAgent !== undefined) project.userAgent = userAgent;
+  const [updatedProject] = await db.update(projects)
+    .set({
+      ...(url && { url }),
+      ...(ignoreRobotstxt !== undefined && { ignoreRobotstxt }),
+      ...(followNofollow !== undefined && { followNofollow }),
+      ...(includeNoindex !== undefined && { includeNoindex }),
+      ...(crawlSitemap !== undefined && { crawlSitemap }),
+      ...(allowSubdomains !== undefined && { allowSubdomains }),
+      ...(basicAuth !== undefined && { basicAuth }),
+      ...(checkExternalLinks !== undefined && { checkExternalLinks }),
+      ...(archive !== undefined && { archive }),
+      ...(userAgent !== undefined && { userAgent }),
+    })
+    .where(and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ))
+    .returning();
 
-  await project.save();
+  if (!updatedProject) {
+    throw new AppError('Project not found', 404);
+  }
 
   res.json({
     message: 'Project updated successfully',
-    project,
+    project: updatedProject,
   });
 }));
 
 // Delete project
 router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
-  const project = await Project.findOne({
-    where: {
-      id: req.params.id,
-      userId: req.user!.id,
-    },
-  });
+  const projectId = parseInt(req.params.id);
 
-  if (!project) {
+  const [deletedProject] = await db.update(projects)
+    .set({ deleting: true })
+    .where(and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ))
+    .returning();
+
+  if (!deletedProject) {
     throw new AppError('Project not found', 404);
   }
-
-  // Mark as deleting (soft delete)
-  project.deleting = true;
-  await project.save();
-
-  // Or hard delete:
-  // await project.destroy();
 
   res.json({ message: 'Project deletion initiated' });
 }));

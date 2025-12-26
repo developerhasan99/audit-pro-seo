@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { projects, crawls, pageReports, issues } from '../db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { Project, Crawl, PageReport, Issue, IssueType } from '../models';
 
 const router = Router();
 
@@ -10,15 +12,16 @@ router.use(authMiddleware);
 
 // Get detailed page report (resource view)
 router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId, pageReportId } = req.params;
+  const projectId = parseInt(req.params.projectId);
+  const pageReportId = parseInt(req.params.pageReportId);
   const { tab = 'details' } = req.query;
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -26,9 +29,9 @@ router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: R
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {
@@ -36,11 +39,11 @@ router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: R
   }
 
   // Get page report
-  const pageReport = await PageReport.findOne({
-    where: {
-      id: pageReportId,
-      crawlId: latestCrawl.id,
-    },
+  const pageReport = await db.query.pageReports.findFirst({
+    where: and(
+      eq(pageReports.id, pageReportId),
+      eq(pageReports.crawlId, latestCrawl.id)
+    ),
   });
 
   if (!pageReport) {
@@ -48,17 +51,14 @@ router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: R
   }
 
   // Get issues for this page
-  const issues = await Issue.findAll({
-    where: {
-      pagereportId: pageReport.id,
-      crawlId: latestCrawl.id,
+  const pageIssues = await db.query.issues.findMany({
+    where: and(
+      eq(issues.pagereportId, pageReport.id),
+      eq(issues.crawlId, latestCrawl.id)
+    ),
+    with: {
+      type: true,
     },
-    include: [
-      {
-        model: IssueType,
-        as: 'issueType',
-      },
-    ],
   });
 
   // Depending on the tab, load different data
@@ -82,7 +82,7 @@ router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: R
       break;
     
     case 'issues':
-      tabData = { issues };
+      tabData = { issues: pageIssues };
       break;
     
     // Add more tabs as needed (links, images, etc.)
@@ -94,7 +94,7 @@ router.get('/:projectId/:pageReportId', asyncHandler(async (req: Request, res: R
     pageReport,
     tab,
     tabData,
-    issues,
+    issues: pageIssues,
   });
 }));
 

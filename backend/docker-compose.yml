@@ -1,19 +1,18 @@
 version: "3.9"
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql-db
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: audit_pro_seo
-      MYSQL_USER: audit_pro_seo
-      MYSQL_PASSWORD: audit_pro_seo
+      POSTGRES_USER: audit_pro_seo
+      POSTGRES_PASSWORD: audit_pro_seo
+      POSTGRES_DB: audit_pro_seo
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mysql_data:
+  postgres_data:

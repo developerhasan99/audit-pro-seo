@@ -1,5 +1,6 @@
-import PageReport from '../../models/PageReport';
-import { Issue } from '../../models/Issue';
+import { db } from '../../db';
+import { pageReports, issues } from '../../db/schema';
+import { eq, and } from 'drizzle-orm';
 import { Rule, GlobalRule } from './rules/Rule';
 import { Status30xRule, Status40xRule, Status50xRule } from './rules/StatusRules';
 import { EmptyTitleRule, ShortTitleRule, LongTitleRule } from './rules/TitleRules';
@@ -66,40 +67,40 @@ export class IssueAnalyzer {
     new DuplicateContentRule(),
   ];
 
-  analyze(pageReport: PageReport): number[] {
-    const issues: number[] = [];
+  analyze(pageReport: any): number[] {
+    const issuesFound: number[] = [];
 
     for (const rule of this.rules) {
       const result = rule.run(pageReport);
       if (result) {
-        issues.push(result.issueTypeId);
+        issuesFound.push(result.issueTypeId);
       }
     }
 
-    return issues;
+    return issuesFound;
   }
 
   // Analyze issues that require comparing multiple pages
   async analyzeGlobalIssues(crawlId: number): Promise<void> {
-    const pageReports = await PageReport.findAll({
-      where: { crawlId },
+    const reports = await db.query.pageReports.findMany({
+      where: eq(pageReports.crawlId, crawlId),
     });
 
     for (const globalRule of this.globalRules) {
-      const duplicateIds = globalRule.check(pageReports);
+      const duplicateIds = globalRule.check(reports as any[]);
       
       for (const reportId of duplicateIds) {
         // Only add if not already present
-        const exists = await Issue.findOne({
-          where: {
-            pagereportId: reportId,
-            crawlId,
-            issueTypeId: globalRule.issueTypeId,
-          },
+        const exists = await db.query.issues.findFirst({
+          where: and(
+            eq(issues.pagereportId, reportId),
+            eq(issues.crawlId, crawlId),
+            eq(issues.issueTypeId, globalRule.issueTypeId)
+          ),
         });
 
         if (!exists) {
-          await Issue.create({
+          await db.insert(issues).values({
             pagereportId: reportId,
             crawlId,
             issueTypeId: globalRule.issueTypeId,

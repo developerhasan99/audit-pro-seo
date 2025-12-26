@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { projects, crawls, pageReports, issues, issueTypes } from '../db/schema';
+import { eq, and, desc, count } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { Project, Crawl, PageReport, Issue, IssueType } from '../models';
-import sequelize from '../database';
 
 const router = Router();
 
@@ -11,14 +12,14 @@ router.use(authMiddleware);
 
 // Get dashboard data for a project
 router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
-  const { projectId } = req.params;
+  const projectId = parseInt(req.params.projectId);
 
   // Verify project belongs to user
-  const project = await Project.findOne({
-    where: {
-      id: projectId,
-      userId: req.user!.id,
-    },
+  const project = await db.query.projects.findFirst({
+    where: and(
+      eq(projects.id, projectId),
+      eq(projects.userId, req.user!.id)
+    ),
   });
 
   if (!project) {
@@ -26,9 +27,9 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Get latest crawl
-  const latestCrawl = await Crawl.findOne({
-    where: { projectId },
-    order: [['start', 'DESC']],
+  const latestCrawl = await db.query.crawls.findFirst({
+    where: eq(crawls.projectId, projectId),
+    orderBy: [desc(crawls.start)],
   });
 
   if (!latestCrawl) {
@@ -41,44 +42,45 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Get crawl statistics
-  const totalPages = await PageReport.count({
-    where: { crawlId: latestCrawl.id },
-  });
+  const [totalPagesResult] = await db
+    .select({ value: count() })
+    .from(pageReports)
+    .where(eq(pageReports.crawlId, latestCrawl.id));
 
-  const totalIssues = await Issue.count({
-    where: { crawlId: latestCrawl.id },
-  });
+  const [totalIssuesResult] = await db
+    .select({ value: count() })
+    .from(issues)
+    .where(eq(issues.crawlId, latestCrawl.id));
 
   // Get issues by priority
-  const issuesByPriority = await Issue.findAll({
-    where: { crawlId: latestCrawl.id },
-    include: [
-      {
-        model: IssueType,
-        as: 'issueType',
-        attributes: ['type', 'priority'],
-      },
-    ],
-    attributes: ['issueTypeId'],
-    group: ['issueTypeId', 'issueType.id'],
-  });
+  const issuesByPriority = await db
+    .select({
+      issueTypeId: issues.issueTypeId,
+      type: issueTypes.type,
+      priority: issueTypes.priority,
+      count: count(),
+    })
+    .from(issues)
+    .innerJoin(issueTypes, eq(issues.issueTypeId, issueTypes.id))
+    .where(eq(issues.crawlId, latestCrawl.id))
+    .groupBy(issues.issueTypeId, issueTypes.type, issueTypes.priority);
 
   // Get status code distribution
-  const statusCodes = await PageReport.findAll({
-    where: { crawlId: latestCrawl.id },
-    attributes: [
-      'statusCode',
-      [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-    ],
-    group: ['statusCode'],
-  });
+  const statusCodes = await db
+    .select({
+      statusCode: pageReports.statusCode,
+      count: count(),
+    })
+    .from(pageReports)
+    .where(eq(pageReports.crawlId, latestCrawl.id))
+    .groupBy(pageReports.statusCode);
 
   res.json({
     project,
     crawl: latestCrawl,
     stats: {
-      totalPages,
-      totalIssues,
+      totalPages: totalPagesResult.value,
+      totalIssues: totalIssuesResult.value,
       issuesByPriority,
       statusCodes,
     },
