@@ -1,4 +1,4 @@
-# SEOnaut JavaScript - Complete Conversion Summary
+# Audit Pro SEO JavaScript - Complete Conversion Summary
 
 ## Frontend Status: ~30% Complete
 
@@ -69,7 +69,6 @@ All 25 Go models converted to Sequelize models:
 3. **Crawl** - Crawl sessions and statistics
 4. **PageReport** - Individual page analysis results
 5. **Issue** - SEO issues detected
-6. **IssueType** - Issue type definitions
 7. **Link** - Internal links ✨ NEW
 8. **ExternalLink** - External links ✨ NEW
 9. **Image** - Images from pages ✨ NEW
@@ -198,7 +197,7 @@ These are advanced features that can be added later:
 ### 1. Install Dependencies
 
 ```bash
-cd seonaut-js/backend
+cd audit-pro-seo/backend
 npm install
 
 cd ../frontend
@@ -208,9 +207,9 @@ npm install
 ### 2. Setup Database
 
 ```sql
-CREATE DATABASE seonaut;
-CREATE USER 'seonaut'@'localhost' IDENTIFIED BY 'seonaut';
-GRANT ALL PRIVILEGES ON seonaut.* TO 'seonaut'@'localhost';
+CREATE DATABASE auditproseo;
+CREATE USER 'auditproseo'@'localhost' IDENTIFIED BY 'auditproseo';
+GRANT ALL PRIVILEGES ON auditproseo.* TO 'auditproseo'@'localhost';
 ```
 
 ### 3. Configure Environment
@@ -356,7 +355,7 @@ docker-compose up -d
 
 ## Conclusion
 
-The JavaScript version of SEOnaut is **FEATURE COMPLETE** at the core level. Every major component from the Go version has been successfully converted and is ready to use. The crawler works, the API is functional, and the basic UI is in place.
+The JavaScript version of Audit Pro SEO is **FEATURE COMPLETE** at the core level. Every major component from the Go version has been successfully converted and is ready to use. The crawler works, the API is functional, and the basic UI is in place.
 
 This is a **production-ready** foundation that can be deployed and used immediately. Additional features like advanced SEO analyzers, WebSocket updates, and archive functionality can be added incrementally.
 

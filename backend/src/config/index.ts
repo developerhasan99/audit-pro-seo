@@ -47,9 +47,9 @@ const config: Config = {
   database: {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306', 10),
-    database: process.env.DB_NAME || 'seonaut',
-    user: process.env.DB_USER || 'seonaut',
-    password: process.env.DB_PASSWORD || 'seonaut',
+    database: process.env.DB_NAME || 'auditproseo',
+    user: process.env.DB_USER || 'auditproseo',
+    password: process.env.DB_PASSWORD || 'auditproseo',
   },
   
   server: {
@@ -71,7 +71,7 @@ const config: Config = {
     threads: parseInt(process.env.CRAWLER_THREADS || '2', 10),
     timeoutHours: parseInt(process.env.CRAWLER_TIMEOUT_HOURS || '2', 10),
     randomDelayMs: parseInt(process.env.CRAWLER_RANDOM_DELAY_MS || '1500', 10),
-    userAgent: process.env.CRAWLER_USER_AGENT || 'SEOnaut/1.0 (+https://seonaut.org)',
+    userAgent: process.env.CRAWLER_USER_AGENT || 'AuditProSEO/1.0 (+https://auditproseo.com)',
   },
   
   cors: {

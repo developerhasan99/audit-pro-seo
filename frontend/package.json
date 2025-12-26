@@ -1,7 +1,7 @@
 {
-    "name": "seonaut-frontend",
+    "name": "audit-pro-seo-frontend",
     "version": "1.0.0",
-    "description": "SEOnaut Frontend - React SEO Auditing Tool",
+    "description": "Audit Pro SEO Frontend - React SEO Auditing Tool",
     "type": "module",
     "scripts": {
         "dev": "vite",

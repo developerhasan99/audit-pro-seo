@@ -28,7 +28,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary-600">SEOnaut</h1>
+              <h1 className="text-2xl font-bold text-primary-600">Audit Pro SEO</h1>
             </Link>
 
             {/* Navigation */}

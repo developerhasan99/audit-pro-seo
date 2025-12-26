@@ -1,4 +1,4 @@
-# SEOnaut JavaScript Edition
+# Audit Pro SEO JavaScript Edition
 
 A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO auditing tool.
 
@@ -47,7 +47,7 @@ A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO audi
 
 1. **Clone the repository**
    ```bash
-   cd seonaut-js
+   cd audit-pro-seo
    ```
 
 2. **Backend Setup**
@@ -67,7 +67,7 @@ A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO audi
    ```
 
 4. **Database Setup**
-   - Create a MySQL database named `seonaut`
+   - Create a MySQL database named `auditproseo`
    - The tables will be created automatically when the backend starts
 
 5. **Access the application**
@@ -85,7 +85,7 @@ Access the application at http://localhost:5173
 ## Project Structure
 
 ```
-seonaut-js/
+audit-pro-seo/
 ├── backend/
 │   ├── src/
 │   │   ├── config/          # Configuration
@@ -176,9 +176,9 @@ SERVER_URL=http://localhost:3000
 
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=seonaut
-DB_USER=seonaut
-DB_PASSWORD=seonaut
+DB_NAME=auditproseo
+DB_USER=auditproseo
+DB_PASSWORD=auditproseo
 
 SESSION_SECRET=your-secret-key
 CORS_ORIGIN=http://localhost:5173

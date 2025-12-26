@@ -18,7 +18,7 @@ export class SitemapChecker {
       const response = await axios.get(sitemapUrl, {
         timeout: 30000,
         headers: {
-          'User-Agent': 'SEOnaut/1.0 (+https://seonaut.org)',
+          'User-Agent': 'AuditProSEO/1.0 (+https://auditproseo.com)',
         },
       });
 

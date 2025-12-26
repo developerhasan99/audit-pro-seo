@@ -21,7 +21,7 @@ export default function SimpleChart({ data, colors = DEFAULT_COLORS }: SimpleCha
           fill="#8884d8"
           dataKey="value"
         >
-          {data.map((entry, index) => (
+          {data.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
           ))}
         </Pie>

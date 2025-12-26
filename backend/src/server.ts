@@ -69,7 +69,7 @@ const startServer = async (): Promise<void> => {
       console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║                                                       ║
-║   🚀 SEOnaut Backend Server                          ║
+║   🚀 Audit Pro SEO Backend Server                    ║
 ║                                                       ║
 ║   Environment: ${config.env.padEnd(37)}║
 ║   Server URL:  ${config.server.url.padEnd(37)}║

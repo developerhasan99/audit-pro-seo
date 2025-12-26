@@ -7,7 +7,7 @@ export default function CrawlLive() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [crawlStatus, setCrawlStatus] = useState<any>(null);
-  const [crawledUrls, setCrawledUrls] = useState<any[]>([]);
+  const [crawledUrls, _setCrawledUrls] = useState<any[]>([]);
   const [stopping, setStopping] = useState(false);
 
   useEffect(() => {

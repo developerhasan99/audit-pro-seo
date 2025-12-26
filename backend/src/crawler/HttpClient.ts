@@ -21,7 +21,7 @@ export class HttpClient {
   private userAgent: string;
 
   constructor(options: HttpClientOptions = {}) {
-    this.userAgent = options.userAgent || 'SEOnaut/1.0 (+https://seonaut.org)';
+    this.userAgent = options.userAgent || 'AuditProSEO/1.0 (+https://auditproseo.com)';
     
     this.client = axios.create({
       timeout: options.timeout || 30000,
