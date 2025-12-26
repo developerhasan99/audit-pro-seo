@@ -8,4 +8,14 @@ const pool = new Pool({
 });
 
 export const db = drizzle(pool, { schema });
+
+export const testConnection = async () => {
+  const client = await pool.connect();
+  try {
+    console.log("✓ Database connection verified");
+  } finally {
+    client.release();
+  }
+};
+
 export default db;

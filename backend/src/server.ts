@@ -9,6 +9,7 @@ import config from "./config";
 import routes from "./routes";
 import { errorHandler } from "./middleware/error.middleware";
 import { initWsServer } from "./websocket/server";
+import { testConnection } from "./db";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -59,6 +60,9 @@ app.use(errorHandler);
 // Start server
 const startServer = async (): Promise<void> => {
   try {
+    // Verify database connection
+    await testConnection();
+
     // Initialize WebSocket server
     initWsServer(httpServer);
 
