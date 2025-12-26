@@ -1,4 +1,4 @@
-# SEOnaut JavaScript - Development Guide
+# AuditProSEO JavaScript - Development Guide
 
 ## Getting Started
 
@@ -37,9 +37,9 @@
 
    Create a MySQL database:
    ```sql
-   CREATE DATABASE seonaut;
-   CREATE USER 'seonaut'@'localhost' IDENTIFIED BY 'seonaut';
-   GRANT ALL PRIVILEGES ON seonaut.* TO 'seonaut'@'localhost';
+   CREATE DATABASE audit_pro_seo;
+   CREATE USER 'audit_pro_seo'@'localhost' IDENTIFIED BY 'audit_pro_seo';
+   GRANT ALL PRIVILEGES ON audit_pro_seo.* TO 'audit_pro_seo'@'localhost';
    FLUSH PRIVILEGES;
    ```
 
