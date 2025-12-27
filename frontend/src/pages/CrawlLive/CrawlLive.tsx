@@ -35,13 +35,19 @@ export default function CrawlLive() {
 
     // Setup authenticated WebSocket
     const token = localStorage.getItem('token');
-    const wsUrl = `ws://${window.location.hostname}:3001?token=${token}`;
+    const wsUrl = `ws://localhost:3000?token=${token}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      if (message.type === 'CRAWL_UPDATE' && message.payload.projectId === parseInt(projectId!)) {
+      
+      if (message.type === 'CRAWL_STARTED' && message.payload.projectId === parseInt(projectId!)) {
+        console.log('Crawl started event received');
+        setCrawlStatus((prev: any) => ({ ...prev, crawling: true }));
+      }
+
+      if (message.type === 'CRAWL_PROGRESS' && message.payload.projectId === parseInt(projectId!)) {
         setCrawlStatus(message.payload);
         if (message.payload.lastUrl) {
           setCrawledUrls((prev) => [message.payload.lastUrl, ...prev].slice(0, 10));

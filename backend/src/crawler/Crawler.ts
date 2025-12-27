@@ -36,6 +36,7 @@ export interface ResponseMessage {
   blocked: boolean;
   inSitemap: boolean;
   timeout: boolean;
+  statusCode?: number;
 }
 
 export class Crawler extends EventEmitter {
@@ -279,6 +280,7 @@ export class Crawler extends EventEmitter {
         blocked: false,
         inSitemap,
         timeout: false,
+        statusCode: response.status,
       } as ResponseMessage);
 
     } catch (error: any) {
@@ -291,6 +293,7 @@ export class Crawler extends EventEmitter {
         blocked: false,
         inSitemap,
         timeout: isTimeout,
+        statusCode: error.response?.status || 0,
       } as ResponseMessage);
     }
   }

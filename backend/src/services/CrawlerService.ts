@@ -57,7 +57,10 @@ export class CrawlerService {
         projectId,
         crawlId: newCrawl.id,
         ...status,
-        lastUrl: response.url.href,
+        lastUrl: {
+          url: response.url.href,
+          statusCode: response.statusCode || 0,
+        },
       });
     });
 
