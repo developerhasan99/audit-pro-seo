@@ -4,7 +4,8 @@ import { useProjectStore } from '../../store/projectStore';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import SimpleChart from '../../components/Charts/SimpleChart';
-import axios from 'axios';
+import apiClient from '../../api/client';
+
 
 export default function Dashboard() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -17,7 +18,7 @@ export default function Dashboard() {
       if (projectId) {
         await fetchProject(parseInt(projectId));
         try {
-          const response = await axios.get(`/api/dashboard/${projectId}`);
+          const response = await apiClient.get(`/dashboard/${projectId}`);
           setDashboardData(response.data);
         } catch (error) {
           console.error('Failed to load dashboard data:', error);

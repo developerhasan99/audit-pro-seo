@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useProjectStore } from '../../store/projectStore';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
-import axios from 'axios';
+import apiClient from '../../api/client';
 
 export default function Issues() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -16,7 +16,7 @@ export default function Issues() {
       if (projectId) {
         await fetchProject(parseInt(projectId));
         try {
-          const response = await axios.get(`/api/issues/${projectId}/summary`);
+          const response = await apiClient.get(`/issues/${projectId}/summary`);
           setSummary(response.data.summary);
         } catch (error) {
           console.error('Failed to load issues:', error);

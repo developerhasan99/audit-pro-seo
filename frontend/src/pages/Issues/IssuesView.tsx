@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import Pagination from '../../components/Common/Pagination';
-import axios from 'axios';
+import apiClient from '../../api/client';
 
 export default function IssuesView() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -19,7 +19,7 @@ export default function IssuesView() {
   useEffect(() => {
     const loadIssues = async () => {
       try {
-        const response = await axios.get(`/api/issues/${projectId}`, {
+        const response = await apiClient.get(`/issues/${projectId}`, {
           params: { issueType, page, limit },
         });
         setIssues(response.data.issues);

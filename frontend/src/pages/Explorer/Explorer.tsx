@@ -3,7 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import Pagination from '../../components/Common/Pagination';
-import axios from 'axios';
+import apiClient from '../../api/client';
+
 
 export default function Explorer() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -19,7 +20,7 @@ export default function Explorer() {
   useEffect(() => {
     const loadPages = async () => {
       try {
-        const response = await axios.get(`/api/explorer/${projectId}`, {
+        const response = await apiClient.get(`/explorer/${projectId}`, {
           params: { search, page, limit },
         });
         setPageReports(response.data.pageReports);

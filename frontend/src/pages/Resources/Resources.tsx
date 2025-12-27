@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import Tabs from '../../components/Common/Tabs';
-import axios from 'axios';
+import apiClient from '../../api/client';
 
 export default function Resources() {
   const { projectId, pageReportId } = useParams<{ projectId: string; pageReportId: string }>();
@@ -13,7 +13,7 @@ export default function Resources() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await axios.get(`/api/resources/${projectId}/${pageReportId}`);
+        const response = await apiClient.get(`/resources/${projectId}/${pageReportId}`);
         setData(response.data);
       } catch (error) {
         console.error('Failed to load page report:', error);

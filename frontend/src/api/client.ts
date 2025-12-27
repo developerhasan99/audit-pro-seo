@@ -11,6 +11,10 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -25,11 +29,16 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Redirect to login on 401
-      window.location.href = '/signin';
+      // Clear token on 401
+      localStorage.removeItem('token');
+      // Redirect to login
+      if (!window.location.pathname.startsWith('/signin') && !window.location.pathname.startsWith('/signup')) {
+        window.location.href = '/signin';
+      }
     }
     return Promise.reject(error);
   }
 );
 
 export default apiClient;
+

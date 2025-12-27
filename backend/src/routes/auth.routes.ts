@@ -4,7 +4,7 @@ import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { AppError, asyncHandler } from '../middleware/error.middleware';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { hashPassword, comparePassword } from '../utils/auth';
+import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 
 const router = Router();
 
@@ -32,12 +32,12 @@ router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
     password: hashedPassword,
   }).returning();
 
-  // Set session
-  (req.session as any).userId = newUser.id;
-  (req.session as any).userEmail = newUser.email;
+  // Generate token
+  const token = generateToken({ id: newUser.id, email: newUser.email });
 
   res.status(201).json({
     message: 'User created successfully',
+    token,
     user: {
       id: newUser.id,
       email: newUser.email,
@@ -68,12 +68,12 @@ router.post('/signin', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Invalid credentials', 401);
   }
 
-  // Set session
-  (req.session as any).userId = user.id;
-  (req.session as any).userEmail = user.email;
+  // Generate token
+  const token = generateToken({ id: user.id, email: user.email });
 
   res.json({
     message: 'Signed in successfully',
+    token,
     user: {
       id: user.id,
       email: user.email,
@@ -84,13 +84,8 @@ router.post('/signin', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // Sign out
-router.post('/signout', authMiddleware, asyncHandler(async (req: Request, res: Response) => {
-  req.session.destroy((err) => {
-    if (err) {
-      throw new AppError('Error signing out', 500);
-    }
-    res.json({ message: 'Signed out successfully' });
-  });
+router.post('/signout', authMiddleware, asyncHandler(async (_req: Request, res: Response) => {
+  res.json({ message: 'Signed out successfully' });
 }));
 
 // Get current user
@@ -183,13 +178,6 @@ router.delete('/account', authMiddleware, asyncHandler(async (req: Request, res:
   if (!user) {
     throw new AppError('User not found', 404);
   }
-
-  // Destroy session
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
-    }
-  });
 
   res.json({ message: 'Account deletion initiated' });
 }));

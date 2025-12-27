@@ -1,5 +1,7 @@
 import { Server } from 'ws';
-import { Server as HttpServer } from 'http';
+import { Server as HttpServer, IncomingMessage } from 'http';
+import { verifyToken } from '../utils/auth';
+import { parse } from 'url';
 
 export interface WsMessage {
   type: string;
@@ -13,9 +15,26 @@ export class WsServer {
   constructor(server: HttpServer) {
     this.wss = new Server({ server });
 
-    this.wss.on('connection', (ws) => {
-      console.log('✓ New WebSocket client connected');
-      this.clients.add(ws);
+    this.wss.on('connection', (ws, req: IncomingMessage) => {
+      const { query } = parse(req.url || '', true);
+      const token = query.token as string;
+
+      if (!token) {
+        console.log('✗ WebSocket connection rejected: Missing token');
+        ws.close(1008, 'Token required');
+        return;
+      }
+
+      try {
+        const user = verifyToken(token);
+        (ws as any).user = user;
+        console.log(`✓ WebSocket client connected: ${user.email}`);
+        this.clients.add(ws);
+      } catch (error) {
+        console.log('✗ WebSocket connection rejected: Invalid token');
+        ws.close(1008, 'Invalid token');
+        return;
+      }
 
       ws.on('close', () => {
         console.log('✗ WebSocket client disconnected');
@@ -38,6 +57,7 @@ export class WsServer {
     });
   }
 }
+
 
 let instance: WsServer | null = null;
 

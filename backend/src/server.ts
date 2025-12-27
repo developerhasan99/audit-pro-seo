@@ -3,7 +3,6 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
-import session from "express-session";
 import { createServer } from "http";
 import config from "./config";
 import routes from "./routes";
@@ -27,19 +26,7 @@ app.use(morgan(config.env === "development" ? "dev" : "combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session configuration
-app.use(
-  session({
-    secret: config.session.secret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: config.env === "production",
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    },
-  }) as any
-);
+
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {

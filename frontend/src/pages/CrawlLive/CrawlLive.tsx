@@ -1,50 +1,76 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout/Layout';
-import axios from 'axios';
+import apiClient from '../../api/client';
 
 export default function CrawlLive() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [crawlStatus, setCrawlStatus] = useState<any>(null);
-  const [crawledUrls, _setCrawledUrls] = useState<any[]>([]);
+  const [crawledUrls, setCrawledUrls] = useState<any[]>([]);
   const [stopping, setStopping] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Start the crawl
+    // Start the crawl via REST
     const startCrawl = async () => {
       try {
-        await axios.post(`/api/crawl/start/${projectId}`);
+        await apiClient.post(`/crawl/start/${projectId}`);
       } catch (error) {
         console.error('Failed to start crawl:', error);
       }
     };
     startCrawl();
 
-    // Poll for status (WebSocket would be better, but this works)
-    const interval = setInterval(async () => {
+    // Initial status fetch
+    const fetchStatus = async () => {
       try {
-        const response = await axios.get(`/api/crawl/status/${projectId}`);
+        const response = await apiClient.get(`/crawl/status/${projectId}`);
         setCrawlStatus(response.data);
-        
-        if (!response.data.crawling) {
-          clearInterval(interval);
-          setTimeout(() => {
-            navigate(`/dashboard/${projectId}`);
-          }, 2000);
-        }
       } catch (error) {
         console.error('Failed to get status:', error);
       }
-    }, 1000);
+    };
+    fetchStatus();
 
-    return () => clearInterval(interval);
+    // Setup authenticated WebSocket
+    const token = localStorage.getItem('token');
+    const wsUrl = `ws://${window.location.hostname}:3001?token=${token}`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'CRAWL_UPDATE' && message.payload.projectId === parseInt(projectId!)) {
+        setCrawlStatus(message.payload);
+        if (message.payload.lastUrl) {
+          setCrawledUrls((prev) => [message.payload.lastUrl, ...prev].slice(0, 10));
+        }
+      }
+      
+      if (message.type === 'CRAWL_COMPLETED' && message.payload.projectId === parseInt(projectId!)) {
+        setCrawlStatus((prev: any) => ({ ...prev, crawling: false }));
+        setTimeout(() => {
+          navigate(`/dashboard/${projectId}`);
+        }, 2000);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, [projectId, navigate]);
 
   const handleStop = async () => {
     setStopping(true);
     try {
-      await axios.post(`/api/crawl/stop/${projectId}`);
+      await apiClient.post(`/crawl/stop/${projectId}`);
     } catch (error) {
       console.error('Failed to stop crawl:', error);
     }
@@ -81,14 +107,14 @@ export default function CrawlLive() {
 
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
             <div
-              className="bg-primary-600 h-4 rounded-full transition-all duration-300"
+              className="bg-blue-600 h-4 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Status Message */}
-        {!crawlStatus?.crawling && crawlStatus?.crawled > 0 && (
+        {crawlStatus && !crawlStatus.crawling && crawlStatus.crawled > 0 && (
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6">
             <p className="text-green-800 dark:text-green-200 font-semibold">
               Crawl completed! Redirecting to dashboard...
@@ -96,22 +122,24 @@ export default function CrawlLive() {
           </div>
         )}
 
-        {/* Recent URLs (placeholder - would come from WebSocket) */}
+        {/* Recent URLs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Recently Crawled URLs
           </h2>
           <div className="space-y-2">
             {crawledUrls.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400">Crawling in progress...</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                {crawlStatus?.crawling ? 'Crawling in progress...' : 'Waiting for updates...'}
+              </p>
             ) : (
               crawledUrls.map((url, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                  <span className="text-sm text-gray-900 dark:text-white truncate">{url.url}</span>
-                  <span className={`px-2 py-1 text-xs rounded ${
+                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded transition-all">
+                  <span className="text-sm text-gray-900 dark:text-white truncate max-w-[80%]">{url.url}</span>
+                  <span className={`px-2 py-1 text-xs font-medium rounded ${
                     url.statusCode >= 200 && url.statusCode < 300
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                   }`}>
                     {url.statusCode}
                   </span>
@@ -124,3 +152,4 @@ export default function CrawlLive() {
     </Layout>
   );
 }
+
