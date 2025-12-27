@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCrawlStore } from '../../store/crawlStore';
 import Layout from '../../components/Layout/Layout';
@@ -13,32 +13,9 @@ export default function CrawlLive() {
   const [stopping, setStopping] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    // Start the crawl via REST
-    const startCrawl = async () => {
-      try {
-        const response = await apiClient.post(`/crawl/start/${projectId}`);
-        if (response.data.crawlId) {
-          setSelectedCrawlId(response.data.crawlId);
-        }
-      } catch (error) {
-        console.error('Failed to start crawl:', error);
-      }
-    };
-    startCrawl();
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current) return;
 
-    // Initial status fetch
-    const fetchStatus = async () => {
-      try {
-        const response = await apiClient.get(`/crawl/status/${projectId}`);
-        setCrawlStatus(response.data);
-      } catch (error) {
-        console.error('Failed to get status:', error);
-      }
-    };
-    fetchStatus();
-
-    // Setup authenticated WebSocket
     const token = localStorage.getItem('token');
     const wsUrl = `ws://localhost:3000?token=${token}`;
     const ws = new WebSocket(wsUrl);
@@ -48,7 +25,6 @@ export default function CrawlLive() {
       const message = JSON.parse(event.data);
       
       if (message.type === 'CRAWL_STARTED' && message.payload.projectId === parseInt(projectId!)) {
-        console.log('Crawl started event received');
         setCrawlStatus((prev: any) => ({ ...prev, crawling: true }));
       }
 
@@ -70,13 +46,45 @@ export default function CrawlLive() {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
     };
+  }, [projectId, navigate]);
+
+  useEffect(() => {
+    // Initial status fetch
+    const fetchStatus = async () => {
+      try {
+        const response = await apiClient.get(`/crawl/status/${projectId}`);
+        setCrawlStatus(response.data);
+        
+        // If already crawling, connect WebSocket
+        if (response.data.crawling) {
+          connectWebSocket();
+        }
+      } catch (error) {
+        console.error('Failed to get status:', error);
+      }
+    };
+    fetchStatus();
 
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
-  }, [projectId, navigate]);
+  }, [projectId, connectWebSocket]);
+
+  const handleStart = async () => {
+    try {
+      const response = await apiClient.post(`/crawl/start/${projectId}`);
+      if (response.data.crawlId) {
+        setSelectedCrawlId(response.data.crawlId);
+      }
+      setCrawlStatus((prev: any) => ({ ...prev, crawling: true }));
+      connectWebSocket();
+    } catch (error) {
+      console.error('Failed to start crawl:', error);
+    }
+  };
 
   const handleStop = async () => {
     setStopping(true);
@@ -106,13 +114,24 @@ export default function CrawlLive() {
                 {crawlStatus?.discovered || 0} URLs discovered
               </p>
             </div>
-            <button
-              onClick={handleStop}
-              disabled={stopping || !crawlStatus?.crawling}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-            >
-              {stopping ? 'Stopping...' : 'Stop Crawl'}
-            </button>
+            <div className="flex space-x-2">
+              {!crawlStatus?.crawling ? (
+                 <button
+                  onClick={handleStart}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                >
+                  Start Crawl
+                </button>
+              ) : (
+                <button
+                  onClick={handleStop}
+                  disabled={stopping}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                >
+                  {stopping ? 'Stopping...' : 'Stop Crawl'}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">

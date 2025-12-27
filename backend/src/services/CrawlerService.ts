@@ -6,7 +6,7 @@ import { IssueAnalyzer } from './issues/IssueAnalyzer';
 import { Broker, EventType } from '../websocket/broker';
 
 export class CrawlerService {
-  private activeCrawlers: Map<number, Crawler> = new Map();
+  private activeCrawlers: Map<number, { crawler: Crawler; crawlId: number }> = new Map();
 
   async startCrawl(projectId: number): Promise<number> {
     // Get project
@@ -19,8 +19,9 @@ export class CrawlerService {
     }
 
     // Check if already crawling
-    if (this.activeCrawlers.has(projectId)) {
-      throw new Error('Crawl already in progress for this project');
+    const active = this.activeCrawlers.get(projectId);
+    if (active) {
+      return active.crawlId;
     }
 
     // Create crawl record
@@ -45,7 +46,7 @@ export class CrawlerService {
     const crawler = new Crawler(project.url, options);
 
     // Store active crawler
-    this.activeCrawlers.set(projectId, crawler);
+    this.activeCrawlers.set(projectId, { crawler, crawlId: newCrawl.id });
 
     // Setup event handlers
     crawler.on('response', async (response: ResponseMessage) => {
@@ -114,17 +115,17 @@ export class CrawlerService {
   }
 
   async stopCrawl(projectId: number): Promise<void> {
-    const crawler = this.activeCrawlers.get(projectId);
-    if (crawler) {
-      crawler.stop();
+    const active = this.activeCrawlers.get(projectId);
+    if (active) {
+      active.crawler.stop();
       this.activeCrawlers.delete(projectId);
     }
   }
 
   getCrawlStatus(projectId: number) {
-    const crawler = this.activeCrawlers.get(projectId);
-    if (crawler) {
-      return crawler.getStatus();
+    const active = this.activeCrawlers.get(projectId);
+    if (active) {
+      return active.crawler.getStatus();
     }
     return null;
   }
