@@ -1,6 +1,6 @@
 # Audit Pro SEO JavaScript Edition
 
-A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO auditing tool.
+A complete JavaScript/TypeScript open-source SEO auditing tool inspired by SEOnaut.
 
 ## Technology Stack
 
@@ -8,8 +8,8 @@ A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO audi
 - **Runtime**: Node.js 20+
 - **Framework**: Express.js
 - **Language**: TypeScript
-- **Database**: MySQL 8.4
-- **ORM**: Sequelize
+- **Database**: PostgreSQL
+- **ORM**: DrizzleORM
 - **Authentication**: Express Session (cookie-based)
 
 ### Frontend
@@ -40,7 +40,7 @@ A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO audi
 ### Prerequisites
 
 - Node.js 20 or higher
-- MySQL 8.4
+- PostgreSQL 16 or higher
 - npm or yarn
 
 ### Development Setup
@@ -67,7 +67,7 @@ A complete JavaScript/TypeScript conversion of SEOnaut - an open-source SEO audi
    ```
 
 4. **Database Setup**
-   - Create a MySQL database named `auditproseo`
+   - Create a PostgreSQL database named `audit_pro_seo`
    - The tables will be created automatically when the backend starts
 
 5. **Access the application**
@@ -175,13 +175,13 @@ PORT=3000
 SERVER_URL=http://localhost:3000
 
 DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=auditproseo
-DB_USER=auditproseo
-DB_PASSWORD=auditproseo
+DB_PORT=5432
+DB_NAME=audit_pro_seo
+DB_USER=audit_pro_seo
+DB_PASSWORD=audit_pro_seo
 
 SESSION_SECRET=your-secret-key
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5432
 
 CRAWLER_THREADS=2
 CRAWLER_TIMEOUT_HOURS=2
@@ -225,7 +225,7 @@ MIT License - see LICENSE file for details
 
 ## Original Project
 
-This is a JavaScript/TypeScript conversion of [SEOnaut](https://github.com/stjudewashere/seonaut) by StJudeWasHere.
+This is a JavaScript/TypeScript open-source SEO auditing tool inspired by [SEOnaut](https://github.com/stjudewashere/seonaut) by StJudeWasHere.
 
 ## Support
 
