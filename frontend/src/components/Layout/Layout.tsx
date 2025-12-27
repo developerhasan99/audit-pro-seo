@@ -1,89 +1,54 @@
-import { ReactNode } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { ReactNode, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Sidebar from './Sidebar';
+import Topbar from './Topbar';
 
 interface LayoutProps {
   children: ReactNode;
+  title?: string;
 }
 
-export default function Layout({ children }: LayoutProps) {
-  const { user, signOut } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/signin');
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
+export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
+  const { projectId } = useParams<{ projectId: string }>();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary-600">Audit Pro SEO</h1>
-            </Link>
+    <div className="min-h-screen bg-[#f8fafc] flex">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-            {/* Navigation */}
-            {user && (
-              <nav className="hidden md:flex space-x-8">
-                <Link
-                  to="/"
-                  className={`${
-                    isActive('/') && location.pathname === '/'
-                      ? 'text-primary-600 border-b-2 border-primary-600'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                  } px-3 py-2 text-sm font-medium transition-colors`}
-                >
-                  Projects
-                </Link>
-              </nav>
-            )}
+      <Sidebar 
+        projectId={projectId} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
+      
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        <Topbar 
+          title={title} 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+        />
+        
+        <main className="flex-1 p-4 md:p-8">
+          {children}
+        </main>
 
-            {/* User Menu */}
-            {user && (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {user.email}
-                </span>
-                <Link
-                  to="/account"
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Account
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
+        <footer className="px-8 py-6 border-t border-slate-200 text-slate-400 text-xs font-medium flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+          <p>© 2024 AuditPro. Premium SEO Analytics Tool.</p>
+          <div className="flex space-x-6">
+            <a href="#" className="hover:text-slate-600">Privacy Policy</a>
+            <a href="#" className="hover:text-slate-600">Terms of Service</a>
+            <a href="#" className="hover:text-slate-600">Support</a>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1">
-        {children}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            © 2024 Audit Pro SEO. Open source SEO auditing tool.
-          </p>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
+
+
