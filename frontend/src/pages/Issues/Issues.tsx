@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProjectStore } from '../../store/projectStore';
+import { useCrawlStore } from '../../store/crawlStore';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
+import CrawlSelector from '../../components/Common/CrawlSelector';
 import apiClient from '../../api/client';
 
 export default function Issues() {
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, fetchProject } = useProjectStore();
+  const { selectedCrawlId } = useCrawlStore();
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,8 +18,12 @@ export default function Issues() {
     const loadData = async () => {
       if (projectId) {
         await fetchProject(parseInt(projectId));
+        setLoading(true);
         try {
-          const response = await apiClient.get(`/issues/${projectId}/summary`);
+          const url = selectedCrawlId 
+            ? `/issues/${projectId}/summary?crawlId=${selectedCrawlId}` 
+            : `/issues/${projectId}/summary`;
+          const response = await apiClient.get(url);
           setSummary(response.data.summary);
         } catch (error) {
           console.error('Failed to load issues:', error);
@@ -26,7 +33,7 @@ export default function Issues() {
       }
     };
     loadData();
-  }, [projectId, fetchProject]);
+  }, [projectId, fetchProject, selectedCrawlId]);
 
   if (loading) {
     return (
@@ -63,8 +70,13 @@ export default function Issues() {
           <Link to={`/dashboard/${projectId}`} className="text-primary-600 hover:text-primary-700 text-sm">
             ← Back to Dashboard
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">Site Issues</h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{currentProject?.url}</p>
+          <div className="mt-2 flex flex-col md:flex-row md:items-end md:justify-between space-y-4 md:space-y-0">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Site Issues</h1>
+              <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{currentProject?.url}</p>
+            </div>
+            {projectId && <CrawlSelector projectId={parseInt(projectId)} />}
+          </div>
         </div>
 
         {!summary || summary.length === 0 ? (
@@ -95,7 +107,7 @@ export default function Issues() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {issue.issueType?.type || 'Unknown Issue'}
+                          {issue.type || 'Unknown Issue'}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {issue.count} {issue.count === 1 ? 'URL' : 'URLs'} affected
@@ -132,7 +144,7 @@ export default function Issues() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {issue.issueType?.type || 'Unknown Issue'}
+                          {issue.type || 'Unknown Issue'}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {issue.count} {issue.count === 1 ? 'URL' : 'URLs'} affected
@@ -169,7 +181,7 @@ export default function Issues() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {issue.issueType?.type || 'Unknown Issue'}
+                          {issue.type || 'Unknown Issue'}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {issue.count} {issue.count === 1 ? 'URL' : 'URLs'} affected

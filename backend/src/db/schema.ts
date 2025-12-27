@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, boolean, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, integer, boolean, timestamp, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
@@ -80,6 +80,7 @@ export const pageReports = pgTable('pagereports', {
 }, (table) => ({
   crawlIdIdx: index('pagereports_crawl_id_idx').on(table.crawlId),
   urlHashIdx: index('pagereports_url_hash_idx').on(table.urlHash),
+  crawlIdUrlHashUnique: uniqueIndex('pagereports_crawl_id_url_hash_idx').on(table.crawlId, table.urlHash),
 }));
 
 export const hreflangs = pgTable('hreflangs', {

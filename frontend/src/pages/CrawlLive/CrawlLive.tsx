@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useCrawlStore } from '../../store/crawlStore';
 import Layout from '../../components/Layout/Layout';
 import apiClient from '../../api/client';
 
 export default function CrawlLive() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const { setSelectedCrawlId } = useCrawlStore();
   const [crawlStatus, setCrawlStatus] = useState<any>(null);
   const [crawledUrls, setCrawledUrls] = useState<any[]>([]);
   const [stopping, setStopping] = useState(false);
@@ -15,7 +17,10 @@ export default function CrawlLive() {
     // Start the crawl via REST
     const startCrawl = async () => {
       try {
-        await apiClient.post(`/crawl/start/${projectId}`);
+        const response = await apiClient.post(`/crawl/start/${projectId}`);
+        if (response.data.crawlId) {
+          setSelectedCrawlId(response.data.crawlId);
+        }
       } catch (error) {
         console.error('Failed to start crawl:', error);
       }
@@ -82,9 +87,8 @@ export default function CrawlLive() {
     }
   };
 
-  const progress = crawlStatus
-    ? ((crawlStatus.crawled / (crawlStatus.crawled + crawlStatus.discovered)) * 100) || 0
-    : 0;
+  const total = (crawlStatus?.crawled || 0) + (crawlStatus?.discovered || 0);
+  const progress = total > 0 ? (crawlStatus.crawled / total) * 100 : 0;
 
   return (
     <Layout>

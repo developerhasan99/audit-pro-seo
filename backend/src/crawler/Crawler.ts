@@ -104,6 +104,9 @@ export class Crawler extends EventEmitter {
         method: 'GET',
       });
 
+      // Emit initial response for the starting URL to show activity
+      this.emit('progress', this.status);
+
       // Start crawling
       await this.crawl();
     } catch (error) {

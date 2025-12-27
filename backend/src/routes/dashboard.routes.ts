@@ -26,13 +26,22 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Project not found', 404);
   }
 
-  // Get latest crawl
-  const latestCrawl = await db.query.crawls.findFirst({
-    where: eq(crawls.projectId, projectId),
-    orderBy: [desc(crawls.start)],
-  });
+  // Get specific crawl or latest
+  const crawlId = req.query.crawlId ? parseInt(req.query.crawlId as string) : null;
+  
+  const selectedCrawl = crawlId 
+    ? await db.query.crawls.findFirst({
+        where: and(
+          eq(crawls.id, crawlId),
+          eq(crawls.projectId, projectId)
+        ),
+      })
+    : await db.query.crawls.findFirst({
+        where: eq(crawls.projectId, projectId),
+        orderBy: [desc(crawls.start)],
+      });
 
-  if (!latestCrawl) {
+  if (!selectedCrawl) {
     res.json({
       project,
       crawl: null,
@@ -45,12 +54,12 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   const [totalPagesResult] = await db
     .select({ value: count() })
     .from(pageReports)
-    .where(eq(pageReports.crawlId, latestCrawl.id));
+    .where(eq(pageReports.crawlId, selectedCrawl.id));
 
   const [totalIssuesResult] = await db
     .select({ value: count() })
     .from(issues)
-    .where(eq(issues.crawlId, latestCrawl.id));
+    .where(eq(issues.crawlId, selectedCrawl.id));
 
   // Get issues by priority
   const issuesByPriority = await db
@@ -62,7 +71,7 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
     })
     .from(issues)
     .innerJoin(issueTypes, eq(issues.issueTypeId, issueTypes.id))
-    .where(eq(issues.crawlId, latestCrawl.id))
+    .where(eq(issues.crawlId, selectedCrawl.id))
     .groupBy(issues.issueTypeId, issueTypes.type, issueTypes.priority);
 
   // Get status code distribution
@@ -72,12 +81,12 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
       count: count(),
     })
     .from(pageReports)
-    .where(eq(pageReports.crawlId, latestCrawl.id))
+    .where(eq(pageReports.crawlId, selectedCrawl.id))
     .groupBy(pageReports.statusCode);
 
   res.json({
     project,
-    crawl: latestCrawl,
+    crawl: selectedCrawl,
     stats: {
       totalPages: totalPagesResult.value,
       totalIssues: totalIssuesResult.value,

@@ -27,13 +27,22 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Project not found', 404);
   }
 
-  // Get latest crawl
-  const latestCrawl = await db.query.crawls.findFirst({
-    where: eq(crawls.projectId, projectId),
-    orderBy: [desc(crawls.start)],
-  });
+  // Get specific crawl or latest
+  const crawlId = req.query.crawlId ? parseInt(req.query.crawlId as string) : null;
+  
+  const selectedCrawl = crawlId 
+    ? await db.query.crawls.findFirst({
+        where: and(
+          eq(crawls.id, crawlId),
+          eq(crawls.projectId, projectId)
+        ),
+      })
+    : await db.query.crawls.findFirst({
+        where: eq(crawls.projectId, projectId),
+        orderBy: [desc(crawls.start)],
+      });
 
-  if (!latestCrawl) {
+  if (!selectedCrawl) {
     res.json({
       pageReports: [],
       total: 0,
@@ -50,8 +59,8 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   
   const searchFilter = search && typeof search === 'string' ? like(pageReports.url, `%${search}%`) : undefined;
   const whereClause = searchFilter 
-    ? and(eq(pageReports.crawlId, latestCrawl.id), searchFilter)
-    : eq(pageReports.crawlId, latestCrawl.id);
+    ? and(eq(pageReports.crawlId, selectedCrawl.id), searchFilter)
+    : eq(pageReports.crawlId, selectedCrawl.id);
 
   // Get page reports with pagination
   const reports = await db.query.pageReports.findMany({

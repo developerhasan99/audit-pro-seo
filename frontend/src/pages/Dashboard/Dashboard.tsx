@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProjectStore } from '../../store/projectStore';
+import { useCrawlStore } from '../../store/crawlStore';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import SimpleChart from '../../components/Charts/SimpleChart';
+import CrawlSelector from '../../components/Common/CrawlSelector';
 import apiClient from '../../api/client';
 
 
 export default function Dashboard() {
   const { projectId } = useParams<{ projectId: string }>();
   const { currentProject, loading: projectLoading, fetchProject } = useProjectStore();
+  const { selectedCrawlId } = useCrawlStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -17,8 +20,12 @@ export default function Dashboard() {
     const loadData = async () => {
       if (projectId) {
         await fetchProject(parseInt(projectId));
+        setLoading(true);
         try {
-          const response = await apiClient.get(`/dashboard/${projectId}`);
+          const url = selectedCrawlId 
+            ? `/dashboard/${projectId}?crawlId=${selectedCrawlId}` 
+            : `/dashboard/${projectId}`;
+          const response = await apiClient.get(url);
           setDashboardData(response.data);
         } catch (error) {
           console.error('Failed to load dashboard data:', error);
@@ -28,7 +35,7 @@ export default function Dashboard() {
       }
     };
     loadData();
-  }, [projectId, fetchProject]);
+  }, [projectId, fetchProject, selectedCrawlId]);
 
   if (loading || projectLoading) {
     return (
@@ -55,9 +62,12 @@ export default function Dashboard() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{currentProject.url}</p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between space-y-4 md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{currentProject.url}</p>
+          </div>
+          {projectId && <CrawlSelector projectId={parseInt(projectId)} />}
         </div>
 
         {!crawl ? (

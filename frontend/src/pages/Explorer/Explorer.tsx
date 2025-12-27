@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useCrawlStore } from '../../store/crawlStore';
 import Layout from '../../components/Layout/Layout';
 import Loading from '../../components/Common/Loading';
 import Pagination from '../../components/Common/Pagination';
+import CrawlSelector from '../../components/Common/CrawlSelector';
 import apiClient from '../../api/client';
 
 
 export default function Explorer() {
   const { projectId } = useParams<{ projectId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { selectedCrawlId } = useCrawlStore();
   
   const [pageReports, setPageReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,9 +22,10 @@ export default function Explorer() {
 
   useEffect(() => {
     const loadPages = async () => {
+      setLoading(true);
       try {
         const response = await apiClient.get(`/explorer/${projectId}`, {
-          params: { search, page, limit },
+          params: { search, page, limit, crawlId: selectedCrawlId },
         });
         setPageReports(response.data.pageReports);
         setTotal(response.data.total);
@@ -32,7 +36,7 @@ export default function Explorer() {
       }
     };
     loadPages();
-  }, [projectId, search, page]);
+  }, [projectId, search, page, selectedCrawlId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +57,10 @@ export default function Explorer() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">URL Explorer</h1>
+        <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between space-y-4 md:space-y-0">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">URL Explorer</h1>
+          {projectId && <CrawlSelector projectId={parseInt(projectId)} />}
+        </div>
 
         {/* Search */}
         <form onSubmit={handleSearch} className="mb-6">

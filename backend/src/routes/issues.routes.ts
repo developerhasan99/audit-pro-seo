@@ -27,13 +27,22 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Project not found', 404);
   }
 
-  // Get latest crawl
-  const latestCrawl = await db.query.crawls.findFirst({
-    where: eq(crawls.projectId, projectId),
-    orderBy: [desc(crawls.start)],
-  });
+  // Get specific crawl or latest
+  const crawlId = req.query.crawlId ? parseInt(req.query.crawlId as string) : null;
+  
+  const selectedCrawl = crawlId 
+    ? await db.query.crawls.findFirst({
+        where: and(
+          eq(crawls.id, crawlId),
+          eq(crawls.projectId, projectId)
+        ),
+      })
+    : await db.query.crawls.findFirst({
+        where: eq(crawls.projectId, projectId),
+        orderBy: [desc(crawls.start)],
+      });
 
-  if (!latestCrawl) {
+  if (!selectedCrawl) {
     res.json({
       issues: [],
       total: 0,
@@ -50,8 +59,8 @@ router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   
   const typeFilter = issueType ? eq(issues.issueTypeId, parseInt(issueType as string)) : undefined;
   const whereClause = typeFilter 
-    ? and(eq(issues.crawlId, latestCrawl.id), typeFilter)
-    : eq(issues.crawlId, latestCrawl.id);
+    ? and(eq(issues.crawlId, selectedCrawl.id), typeFilter)
+    : eq(issues.crawlId, selectedCrawl.id);
 
   // Get issues with pagination
   const foundIssues = await db.query.issues.findMany({
@@ -101,13 +110,22 @@ router.get('/:projectId/summary', asyncHandler(async (req: Request, res: Respons
     throw new AppError('Project not found', 404);
   }
 
-  // Get latest crawl
-  const latestCrawl = await db.query.crawls.findFirst({
-    where: eq(crawls.projectId, projectId),
-    orderBy: [desc(crawls.start)],
-  });
+  // Get specific crawl or latest
+  const crawlId = req.query.crawlId ? parseInt(req.query.crawlId as string) : null;
+  
+  const selectedCrawl = crawlId 
+    ? await db.query.crawls.findFirst({
+        where: and(
+          eq(crawls.id, crawlId),
+          eq(crawls.projectId, projectId)
+        ),
+      })
+    : await db.query.crawls.findFirst({
+        where: eq(crawls.projectId, projectId),
+        orderBy: [desc(crawls.start)],
+      });
 
-  if (!latestCrawl) {
+  if (!selectedCrawl) {
     res.json({ summary: [] });
     return;
   }
@@ -122,7 +140,7 @@ router.get('/:projectId/summary', asyncHandler(async (req: Request, res: Respons
     })
     .from(issues)
     .innerJoin(issueTypes, eq(issues.issueTypeId, issueTypes.id))
-    .where(eq(issues.crawlId, latestCrawl.id))
+    .where(eq(issues.crawlId, selectedCrawl.id))
     .groupBy(issues.issueTypeId, issueTypes.type, issueTypes.priority)
     .orderBy(desc(count()));
 

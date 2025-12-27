@@ -141,7 +141,7 @@ export class CrawlerService {
           crawlId,
           url: url.href,
           scheme: url.protocol.replace(':', ''),
-          statusCode: 0,
+          statusCode: response.statusCode || 0,
           urlHash: this.generateHash(url.href),
           blockedByRobotstxt: blocked,
           timeout,
