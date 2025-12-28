@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useProjectStore } from '../../store/projectStore';
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -11,17 +12,17 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
-
 import ProjectSelector from '../Sidebar/ProjectSelector';
 
 interface SidebarProps {
-  projectId?: string;
   isOpen?: boolean;
   onClose?: () => void;
 }
 
-export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const { selectedProjectId } = useProjectStore();
+  const projectIdStr = selectedProjectId?.toString();
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -31,15 +32,15 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
     {
       title: 'Dashboard',
       items: [
-        { name: 'Overview', icon: LayoutDashboard, path: projectId ? `/dashboard/${projectId}` : '/' },
-        { name: 'New Audit', icon: PlusCircle, path: projectId ? `/crawl/live/${projectId}` : '/' },
+        { name: 'Overview', icon: LayoutDashboard, path: projectIdStr ? `/dashboard/${projectIdStr}` : '/' },
+        { name: 'New Audit', icon: PlusCircle, path: projectIdStr ? `/crawl/live/${projectIdStr}` : '/' },
       ]
     },
     {
       title: 'Reports',
       items: [
-        { name: 'Issues Explorer', icon: ShieldCheck, path: projectId ? `/issues/${projectId}` : '#' },
-        { name: 'Data Explorer', icon: Search, path: projectId ? `/explorer/${projectId}` : '#' },
+        { name: 'Issues Explorer', icon: ShieldCheck, path: projectIdStr ? `/issues/${projectIdStr}` : '#' },
+        { name: 'Data Explorer', icon: Search, path: projectIdStr ? `/explorer/${projectIdStr}` : '#' },
         { name: 'Site Structure', icon: Network, path: '#' },
       ]
     },
@@ -51,6 +52,7 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
       ]
     }
   ];
+
 
   return (
     <aside className={`

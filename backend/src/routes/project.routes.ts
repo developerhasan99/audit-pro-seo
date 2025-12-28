@@ -138,8 +138,7 @@ router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
 router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
   const projectId = parseInt(req.params.id);
 
-  const [deletedProject] = await db.update(projects)
-    .set({ deleting: true })
+  const [deletedProject] = await db.delete(projects)
     .where(and(
       eq(projects.id, projectId),
       eq(projects.userId, req.user!.id)
@@ -150,7 +149,7 @@ router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Project not found', 404);
   }
 
-  res.json({ message: 'Project deletion initiated' });
+  res.json({ message: 'Project deleted successfully' });
 }));
 
 export default router;

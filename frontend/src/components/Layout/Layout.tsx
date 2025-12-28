@@ -1,7 +1,8 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import { useProjectStore } from '../../store/projectStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,6 +12,17 @@ interface LayoutProps {
 export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
   const { projectId } = useParams<{ projectId: string }>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { setSelectedProjectId, fetchProject, currentProject } = useProjectStore();
+
+  useEffect(() => {
+    if (projectId) {
+      const id = parseInt(projectId);
+      setSelectedProjectId(id);
+      if (!currentProject || currentProject.id !== id) {
+        fetchProject(id);
+      }
+    }
+  }, [projectId, setSelectedProjectId, fetchProject, currentProject]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex">
@@ -23,7 +35,6 @@ export default function Layout({ children, title = "Dashboard" }: LayoutProps) {
       )}
 
       <Sidebar 
-        projectId={projectId} 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
       />
