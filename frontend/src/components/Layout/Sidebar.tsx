@@ -25,16 +25,16 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const navItems = [
+  const navGroups = [
     {
-      title: 'DASHBOARD',
+      title: 'Dashboard',
       items: [
         { name: 'Overview', icon: LayoutDashboard, path: projectId ? `/dashboard/${projectId}` : '/' },
         { name: 'New Audit', icon: PlusCircle, path: projectId ? `/crawl/live/${projectId}` : '/' },
       ]
     },
     {
-      title: 'REPORTS',
+      title: 'Reports',
       items: [
         { name: 'Issues Explorer', icon: ShieldCheck, path: projectId ? `/issues/${projectId}` : '#' },
         { name: 'Data Explorer', icon: Search, path: projectId ? `/explorer/${projectId}` : '#' },
@@ -42,7 +42,7 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
       ]
     },
     {
-      title: 'MAINTENANCE',
+      title: 'Maintenance',
       items: [
         { name: 'Crawl Logs', icon: ClipboardList, path: '#' },
         { name: 'Settings', icon: Settings, path: '/account' },
@@ -51,17 +51,17 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
   ];
 
   return (
-    <div className={`
-      w-64 bg-[#1e1b4b] text-slate-300 flex flex-col h-screen fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0
+    <aside className={`
+      w-64 bg-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
     `}>
-      {/* Logo & Close Button */}
-      <div className="p-6 flex items-center justify-between">
+      {/* Brand & Close Button */}
+      <div className="p-8 pb-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">
+          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-white shadow-xl rotate-3">
             A
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">AuditPro</span>
+          <span className="text-2xl font-black tracking-tighter text-white">AuditPro</span>
         </div>
         <button 
           onClick={onClose}
@@ -72,29 +72,34 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto">
-        {navItems.map((section) => (
-          <div key={section.title} className="space-y-2">
-            <h3 className="px-3 text-xs font-semibold text-slate-500 tracking-wider">
-              {section.title}
-            </h3>
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            <p className="px-4 py-2 mt-4 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+              {group.title}
+            </p>
             <div className="space-y-1">
-              {section.items.map((item) => {
+              {group.items.map((item) => {
+                console.log(item.path);
                 const active = isActive(item.path);
                 return (
                   <Link
                     key={item.name}
                     to={item.path}
                     onClick={onClose}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
-                      active 
-                        ? 'bg-blue-600/90 text-white shadow-lg shadow-blue-900/20' 
-                        : 'hover:bg-slate-800 hover:text-white'
-                    }`}
+                    className={`
+                      w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
+                      ${active 
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                      }
+                    `}
                   >
                     <div className="flex items-center space-x-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.name}</span>
+                      <span className="flex-shrink-0">
+                        <item.icon className="w-5 h-5" />
+                      </span>
+                      <span className="font-semibold text-sm">{item.name}</span>
                     </div>
                     {active && <ChevronRight className="w-3 h-3 opacity-50" />}
                   </Link>
@@ -106,20 +111,23 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
       </nav>
 
       {/* Plan Card */}
-      <div className="p-4 m-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan: Pro</span>
-          <span className="text-[10px] text-slate-400">1.2GB/10GB</span>
+      <div className="p-4 border-t border-slate-800">
+        <div className="bg-indigo-600/10 rounded-xl p-4 border border-indigo-500/20">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-[11px] font-black text-indigo-400 uppercase tracking-widest">Plan: Pro</span>
+            <span className="text-xs text-slate-500 font-bold">1.2GB/10GB</span>
+          </div>
+          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-3">
+            <div className="bg-indigo-500 h-full w-[12%]"></div>
+          </div>
+          <button className="w-full py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-bold rounded-lg transition-colors flex items-center justify-center space-x-2">
+            <Zap className="w-3 h-3" />
+            <span>Upgrade Plan</span>
+          </button>
         </div>
-        <div className="w-full bg-slate-700 rounded-full h-1.5 mb-3">
-          <div className="bg-blue-500 h-1.5 rounded-full w-[12%]"></div>
-        </div>
-        <button className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center space-x-2">
-          <Zap className="w-3 h-3 text-yellow-400" />
-          <span>Upgrade Plan</span>
-        </button>
       </div>
-    </div>
+    </aside>
   );
 }
+
 
