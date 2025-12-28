@@ -12,6 +12,8 @@ import {
   X
 } from 'lucide-react';
 
+import ProjectSelector from '../Sidebar/ProjectSelector';
+
 interface SidebarProps {
   projectId?: string;
   isOpen?: boolean;
@@ -71,6 +73,9 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
+      {/* Project Selector */}
+      <ProjectSelector onClose={onClose} />
+
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
         {navGroups.map((group) => (
@@ -80,7 +85,6 @@ export default function Sidebar({ projectId, isOpen, onClose }: SidebarProps) {
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
-                console.log(item.path);
                 const active = isActive(item.path);
                 return (
                   <Link
