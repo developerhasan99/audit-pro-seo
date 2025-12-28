@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Project, CreateProjectData } from '../../api/projects.api';
 import { useProjectStore } from '../../store/projectStore';
 import { X, Globe, Shield, Search, Network, Info } from 'lucide-react';
+import { CustomSwitch } from '../../components/Common/CustomSwitch';
 
 interface ProjectSettingsModalProps {
   project: Project;
@@ -40,10 +41,8 @@ export default function ProjectSettingsModal({ project, isOpen, onClose }: Proje
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    setFormData(prev => ({ ...prev, [name]: val }));
+  const handleChange = (name: string, value: any) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const settings = [
@@ -57,85 +56,107 @@ export default function ProjectSettingsModal({ project, isOpen, onClose }: Proje
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+      <div 
+        className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-10 pb-6 border-none">
           <div>
-            <h3 className="text-xl font-black text-slate-900 leading-tight">Project Settings</h3>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Configure {new URL(project.url).hostname}</p>
+            <h3 className="text-3xl font-black text-slate-900 leading-tight tracking-tight italic">Project Settings</h3>
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">
+              Modifying: {new URL(project.url).hostname.replace('www.', '')}
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+          <button 
+            onClick={onClose} 
+            className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-2xl transition-all"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          <div className="px-10 pb-10 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-10">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-bold flex items-center space-x-3">
-                <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+              <div className="p-5 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-[13px] font-black flex items-center space-x-4 animate-in slide-in-from-top-2">
+                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">
-                  Website URL
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none sticky">
-                    <Globe className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                  </div>
-                  <input
-                    type="url"
-                    name="url"
-                    value={formData.url}
-                    onChange={handleChange}
-                    className="block w-full pl-11 pr-4 py-3 bg-slate-50 border-transparent focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-xl text-slate-900 font-bold transition-all sm:text-sm"
-                    required
-                  />
+            <div className="space-y-4">
+              <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
+                Website Entry URL
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none sticky">
+                  <Globe className="h-5 w-5 text-slate-300 group-focus-within:text-indigo-500 transition-colors" />
                 </div>
+                <input
+                  type="url"
+                  name="url"
+                  value={formData.url}
+                  onChange={(e) => handleChange('url', e.target.value)}
+                  className="w-full h-16 pl-14 pr-6 bg-slate-50 border-none focus:bg-white focus:ring-8 focus:ring-indigo-500/5 rounded-2xl text-lg font-black transition-all"
+                  required
+                />
               </div>
+            </div>
 
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 ml-1">
+                <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
+                <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em]">
+                  Audit configurations
+                </h3>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {settings.map((item) => (
-                  <label key={item.id} className="relative flex items-center p-4 bg-slate-50 border border-transparent hover:border-indigo-200 hover:bg-white rounded-2xl cursor-pointer transition-all group">
-                    <div className="flex-1 pr-4">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <item.icon className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                        <span className="text-sm font-black text-slate-800 tracking-tight">{item.label}</span>
+                  <div 
+                    key={item.id} 
+                    className="relative flex items-center justify-between p-5 bg-slate-50 border border-transparent hover:border-indigo-50 hover:bg-white rounded-[1.75rem] cursor-pointer transition-all group"
+                    onClick={() => handleChange(item.id, !(formData as any)[item.id])}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:border-indigo-100 transition-colors">
+                        <item.icon className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                       </div>
-                      <p className="text-xs text-slate-500 font-bold leading-relaxed">{item.description}</p>
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-black text-slate-900 leading-none mb-1">
+                          {item.label}
+                        </span>
+                        <p className="text-[10px] text-slate-400 font-bold leading-tight line-clamp-1">{item.description}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name={item.id}
-                        checked={!!(formData as any)[item.id]}
-                        onChange={handleChange}
-                        className="w-5 h-5 text-indigo-600 bg-slate-200 border-none rounded-lg focus:ring-offset-0 focus:ring-indigo-500/20"
-                      />
-                    </div>
-                  </label>
+                    <CustomSwitch 
+                      checked={!!(formData as any)[item.id]} 
+                      onChange={(checked) => handleChange(item.id, checked)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+          <div className="p-10 pt-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end space-x-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 text-slate-500 font-bold text-sm hover:text-slate-700 transition-colors"
+              className="text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
             >
-              Cancel
+              Discard Changes
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-2.5 bg-slate-900 border-2 border-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-black shadow-lg shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50"
+              className="h-16 px-10 bg-slate-900 border-2 border-slate-900 hover:bg-black text-white rounded-2xl text-base font-black shadow-xl shadow-indigo-100/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? 'Saving...' : 'Save Settings'}
+              {loading ? (
+                <div className="w-5 h-5 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                'Save Infrastructure Update'
+              )}
             </button>
           </div>
         </form>

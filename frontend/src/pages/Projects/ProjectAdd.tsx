@@ -15,18 +15,8 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Label } from '../../components/ui/Label';
-import { Switch } from '../../components/ui/Switch';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '../../components/ui/Card';
+import { CustomSwitch } from '../../components/Common/CustomSwitch';
+
 
 export default function ProjectAdd() {
   const navigate = useNavigate();
@@ -74,32 +64,33 @@ export default function ProjectAdd() {
         <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Link 
             to="/projects" 
-            className="inline-flex items-center space-x-2 text-sm font-bold text-slate-400 hover:text-primary transition-colors mb-8 group"
+            className="inline-flex items-center space-x-2 text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors mb-8 group"
             onClick={() => clearError()}
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             <span className="uppercase tracking-widest text-[11px]">Back to Projects</span>
           </Link>
 
-          <Card className="border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[3rem] overflow-hidden bg-white">
-            <CardHeader className="relative p-12 pb-0 border-none">
+          {/* Custom Card Implementation */}
+          <div className="bg-white rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white">
+            <div className="relative p-12 pb-0">
               <div className="flex items-center space-x-6 mb-8">
-                <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center rotate-3 shadow-2xl shadow-primary/20">
+                <div className="w-16 h-16 bg-indigo-600 rounded-[1.5rem] flex items-center justify-center rotate-3 shadow-2xl shadow-indigo-600/20">
                   <Plus className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-4xl font-black text-slate-900 tracking-tight leading-none mb-3">Add Website</CardTitle>
-                  <CardDescription className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">
+                  <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none mb-3 italic">Add Website</h2>
+                  <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">
                     Configure your audit intelligence
-                  </CardDescription>
+                  </p>
                 </div>
               </div>
               <div className="absolute top-12 right-12">
-                <Sparkles className="w-8 h-8 text-primary/10 animate-pulse" />
+                <Sparkles className="w-8 h-8 text-indigo-500/10 animate-pulse" />
               </div>
-            </CardHeader>
+            </div>
             
-            <CardContent className="p-12 pt-10">
+            <div className="p-12 pt-10">
               <form onSubmit={handleSubmit} id="add-project-form" className="space-y-12">
                 {error && (
                   <div className="p-5 bg-red-50 border border-red-100 rounded-[1.5rem] text-red-600 text-[13px] font-black flex items-center space-x-4 animate-in slide-in-from-top-2">
@@ -110,30 +101,30 @@ export default function ProjectAdd() {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between px-2">
-                    <Label htmlFor="url" className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                    <label htmlFor="url" className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
                       Target Website Entry URL
-                    </Label>
-                    <span className="text-[9px] font-black text-primary uppercase bg-primary/10 px-3 py-1 rounded-full tracking-widest">Required</span>
+                    </label>
+                    <span className="text-[9px] font-black text-indigo-600 uppercase bg-indigo-50 px-3 py-1 rounded-full tracking-widest">Required</span>
                   </div>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none sticky">
-                      <Globe className="h-6 w-6 text-slate-300 group-focus-within:text-primary transition-colors" />
+                    <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none z-10">
+                      <Globe className="h-6 w-6 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
                     </div>
-                    <Input
+                    <input
                       id="url"
                       type="url"
                       required
                       placeholder="https://example.com"
                       value={formData.url}
                       onChange={(e) => handleChange('url', e.target.value)}
-                      className="h-24 pl-16 pr-8 bg-slate-50 border-none focus-visible:ring-offset-0 focus-visible:ring-[12px] focus-visible:ring-primary/5 rounded-[2rem] text-2xl font-black transition-all placeholder:text-slate-300"
+                      className="w-full h-24 pl-16 pr-8 bg-slate-50 border-transparent border-2 focus:border-indigo-100 focus:bg-white focus:outline-none rounded-[2rem] text-2xl font-black transition-all placeholder:text-slate-300"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-8">
                    <div className="flex items-center space-x-3 px-2">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full" />
                     <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em]">
                       Audit Engine Configuration
                     </h3>
@@ -147,39 +138,33 @@ export default function ProjectAdd() {
                         onClick={() => handleChange(item.id, !(formData as any)[item.id])}
                       >
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:border-primary/20 transition-colors">
-                            <item.icon className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:border-indigo-100 transition-colors">
+                            <item.icon className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
                           </div>
                           <div className="flex flex-col">
-                            <Label 
-                              htmlFor={item.id} 
-                              className="text-[13px] font-black text-slate-900 cursor-pointer block leading-none mb-1.5"
-                            >
+                            <span className="text-[13px] font-black text-slate-900 cursor-pointer block leading-none mb-1.5">
                               {item.label}
-                            </Label>
+                            </span>
                             <p className="text-[10px] text-slate-400 font-bold leading-tight">{item.description}</p>
                           </div>
                         </div>
-                        <Switch 
-                          id={item.id} 
+                        <CustomSwitch 
                           checked={(formData as any)[item.id]} 
-                          onCheckedChange={(checked) => handleChange(item.id, checked)}
-                          className="data-[state=checked]:bg-primary"
-                          onClick={(e) => e.stopPropagation()}
+                          onChange={(checked) => handleChange(item.id, checked)}
                         />
                       </div>
                     ))}
                   </div>
                 </div>
               </form>
-            </CardContent>
+            </div>
 
-            <CardFooter className="p-12 pt-0 flex flex-col items-stretch">
-              <Button 
+            <div className="p-12 pt-0 flex flex-col items-stretch">
+              <button 
                 form="add-project-form"
                 type="submit" 
                 disabled={loading}
-                className="w-full h-24 bg-slate-900 hover:bg-black text-white rounded-[2rem] text-xl font-black shadow-2xl shadow-indigo-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-4 group overflow-hidden relative"
+                className="w-full h-24 bg-slate-900 hover:bg-black text-white rounded-[2rem] text-xl font-black shadow-2xl shadow-indigo-100 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center space-x-4 group overflow-hidden relative"
               >
                 <div className="relative z-10 flex items-center space-x-4">
                   {loading ? (
@@ -196,9 +181,9 @@ export default function ProjectAdd() {
                     <ArrowRight className="w-8 h-8 text-white/20" />
                    </div>
                 )}
-              </Button>
-            </CardFooter>
-          </Card>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
