@@ -1,8 +1,10 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 export interface User {
   id: number;
   email: string;
+  firstName?: string;
+  lastName?: string;
   lang?: string;
   theme?: string;
 }
@@ -10,6 +12,8 @@ export interface User {
 export interface SignUpData {
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface SignInData {
@@ -19,32 +23,32 @@ export interface SignInData {
 
 export const authApi = {
   signUp: async (data: SignUpData) => {
-    const response = await apiClient.post('/auth/signup', data);
+    const response = await apiClient.post("/auth/signup", data);
     return response.data;
   },
 
   signIn: async (data: SignInData) => {
-    const response = await apiClient.post('/auth/signin', data);
+    const response = await apiClient.post("/auth/signin", data);
     return response.data;
   },
 
   signOut: async () => {
-    const response = await apiClient.post('/auth/signout');
+    const response = await apiClient.post("/auth/signout");
     return response.data;
   },
 
   getMe: async () => {
-    const response = await apiClient.get('/auth/me');
+    const response = await apiClient.get("/auth/me");
     return response.data;
   },
 
   updateProfile: async (data: Partial<User>) => {
-    const response = await apiClient.put('/auth/profile', data);
+    const response = await apiClient.put("/auth/profile", data);
     return response.data;
   },
 
   changePassword: async (currentPassword: string, newPassword: string) => {
-    const response = await apiClient.put('/auth/password', {
+    const response = await apiClient.put("/auth/password", {
       currentPassword,
       newPassword,
     });
@@ -52,7 +56,7 @@ export const authApi = {
   },
 
   deleteAccount: async () => {
-    const response = await apiClient.delete('/auth/account');
+    const response = await apiClient.delete("/auth/account");
     return response.data;
   },
 };

@@ -1,33 +1,35 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { useState, FormEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 
 export default function SignUp() {
   const navigate = useNavigate();
   const { signUp, error, loading, clearError } = useAuthStore();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [localError, setLocalError] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [localError, setLocalError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
-    setLocalError('');
+    setLocalError("");
 
     if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+      setLocalError("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      setLocalError('Password must be at least 6 characters');
+      setLocalError("Password must be at least 6 characters");
       return;
     }
-    
+
     try {
-      await signUp(email, password);
-      navigate('/');
+      await signUp(email, password, firstName, lastName);
+      navigate("/");
     } catch (error) {
       // Error is handled by the store
     }
@@ -36,83 +38,147 @@ export default function SignUp() {
   const displayError = error || localError;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h1 className="text-center text-4xl font-bold text-primary-600">Audit Pro SEO</h1>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Create your account
-          </h2>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {displayError && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-              <p className="text-sm text-red-800 dark:text-red-200">{displayError}</p>
+    <div className="min-h-screen flex bg-white">
+      {/* Left Column: Sign Up Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 md:px-24 lg:px-32 py-12">
+        <div className="max-w-[420px] w-full mx-auto animate-in fade-in slide-in-from-left-4 duration-700">
+          <div className="mb-10 text-center lg:text-left">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
+              Create an account
+            </h1>
+            <p className="text-slate-500 font-medium">
+              Enter your details to create an account
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {displayError && (
+              <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+                {displayError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="firstName"
+                  className="text-sm font-bold text-slate-700"
+                >
+                  First name
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  placeholder="John"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all text-sm font-medium"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="lastName"
+                  className="text-sm font-bold text-slate-700"
+                >
+                  Last name
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  placeholder="Doe"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all text-sm font-medium"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
             </div>
-          )}
-          
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-sm font-bold text-slate-700"
+              >
+                Email
+              </label>
               <input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="m@example.com"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all text-sm font-medium"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                title="Password must be at least 6 characters"
+                className="text-sm font-bold text-slate-700"
+              >
+                Password
+              </label>
               <input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all text-sm font-medium"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="confirm-password" className="sr-only">Confirm Password</label>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="confirmPassword"
+                className="text-sm font-bold text-slate-700"
+              >
+                Confirm Password
+              </label>
               <input
-                id="confirm-password"
-                name="confirm-password"
+                id="confirmPassword"
                 type="password"
-                autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm password"
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all text-sm font-medium"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm transition-all shadow-lg shadow-indigo-100 active:scale-[0.98] disabled:opacity-50 mt-4"
             >
-              {loading ? 'Creating account...' : 'Sign up'}
+              {loading ? "Creating account..." : "Create account"}
             </button>
-          </div>
+          </form>
 
-          <div className="text-center">
-            <Link to="/signin" className="text-primary-600 hover:text-primary-500">
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </form>
+          <footer className="mt-8 text-center">
+            <p className="text-sm font-bold text-slate-500">
+              Already have an account?{" "}
+              <Link
+                to="/signin"
+                className="text-indigo-600 hover:text-indigo-700"
+              >
+                Sign in
+              </Link>
+            </p>
+          </footer>
+        </div>
+      </div>
+
+      <div className="hidden lg:flex w-1/2 bg-slate-50 items-center justify-center p-12">
+        <div className="max-w-[80%] animate-in fade-in slide-in-from-right-4 duration-700">
+          <img
+            src="/auth-illustration.svg"
+            alt="Authentication Illustration"
+            className="w-full h-auto drop-shadow-2xl"
+          />
+        </div>
       </div>
     </div>
   );
