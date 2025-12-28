@@ -50,11 +50,10 @@ export default function ProjectList() {
 
   return (
     <Layout title="All Projects">
-      <div className="p-4 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Project Management</h2>
-            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Manage and monitor your website audits</p>
+            <h2 className="text-xl font-black text-slate-900">Project Management</h2>
+            <p className="text-sm font-medium text-slate-400 mt-1">Manage and monitor your website audits</p>
           </div>
           <Link
             to="/projects/add"
@@ -191,7 +190,6 @@ export default function ProjectList() {
             />
           </>
         )}
-      </div>
     </Layout>
   );
 }
