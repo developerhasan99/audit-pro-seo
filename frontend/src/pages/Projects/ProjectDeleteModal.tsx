@@ -1,6 +1,6 @@
 import { Project } from '../../api/projects.api';
 import { useProjectStore } from '../../store/projectStore';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Trash2, } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent, 
