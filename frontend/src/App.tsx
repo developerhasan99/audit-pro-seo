@@ -16,6 +16,8 @@ import Export from './pages/Export/Export';
 import CrawlLive from './pages/CrawlLive/CrawlLive';
 import Account from './pages/Account/Account';
 
+import Home from './pages/Home/Home';
+
 function App() {
   const { user, initialized, checkAuth } = useAuthStore();
 
@@ -39,7 +41,8 @@ function App() {
         <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/" />} />
 
         {/* Protected routes */}
-        <Route path="/" element={user ? <ProjectList /> : <Navigate to="/signin" />} />
+        <Route path="/" element={user ? <Home /> : <Navigate to="/signin" />} />
+        <Route path="/projects" element={user ? <ProjectList /> : <Navigate to="/signin" />} />
         <Route path="/projects/add" element={user ? <ProjectAdd /> : <Navigate to="/signin" />} />
         <Route path="/dashboard/:projectId" element={user ? <Dashboard /> : <Navigate to="/signin" />} />
         <Route path="/issues/:projectId" element={user ? <Issues /> : <Navigate to="/signin" />} />

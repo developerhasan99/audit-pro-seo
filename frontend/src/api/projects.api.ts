@@ -15,6 +15,7 @@ export interface Project {
   checkExternalLinks?: boolean;
   archive?: boolean;
   userAgent?: string;
+  crawls?: any[];
 }
 
 export interface CreateProjectData {

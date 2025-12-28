@@ -36,7 +36,7 @@ export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   };
 
   const handleAddProject = () => {
-    navigate('/');
+    navigate('/projects');
     setIsOpen(false);
     if (onClose) onClose();
   };
