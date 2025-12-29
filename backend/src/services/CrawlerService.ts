@@ -1,21 +1,33 @@
-import { Crawler, CrawlerOptions, ResponseMessage } from '../crawler/Crawler';
-import { db } from '../db';
-import { projects, crawls, pageReports, issues, links, externalLinks, images, videos, scripts, styles } from '../db/schema';
-import { eq, count } from 'drizzle-orm';
-import { IssueAnalyzer } from './issues/IssueAnalyzer';
-import { Broker, EventType } from '../websocket/broker';
+import { Crawler, CrawlerOptions, ResponseMessage } from "../crawler/Crawler";
+import { db } from "../db";
+import {
+  projects,
+  crawls,
+  pageReports,
+  issues,
+  links,
+  externalLinks,
+  images,
+  videos,
+  scripts,
+  styles,
+} from "../db/schema";
+import { eq, count } from "drizzle-orm";
+import { IssueAnalyzer } from "./issues/IssueAnalyzer";
+import { Broker, EventType } from "../websocket/broker";
 
 export class CrawlerService {
-  private activeCrawlers: Map<number, { crawler: Crawler; crawlId: number }> = new Map();
+  private activeCrawlers: Map<number, { crawler: Crawler; crawlId: number }> =
+    new Map();
 
   async startCrawl(projectId: number): Promise<number> {
     // Get project
     const project = await db.query.projects.findFirst({
       where: eq(projects.id, projectId),
     });
-    
+
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error("Project not found");
     }
 
     // Check if already crawling
@@ -25,10 +37,13 @@ export class CrawlerService {
     }
 
     // Create crawl record
-    const [newCrawl] = await db.insert(crawls).values({
-      projectId,
-      start: new Date(),
-    }).returning();
+    const [newCrawl] = await db
+      .insert(crawls)
+      .values({
+        projectId,
+        start: new Date(),
+      })
+      .returning();
 
     // Setup crawler options
     const options: CrawlerOptions = {
@@ -49,9 +64,17 @@ export class CrawlerService {
     this.activeCrawlers.set(projectId, { crawler, crawlId: newCrawl.id });
 
     // Setup event handlers
-    crawler.on('response', async (response: ResponseMessage) => {
+    crawler.on("status_update", (message: string) => {
+      Broker.publish(EventType.CRAWL_STATUS_UPDATE, {
+        projectId,
+        crawlId: newCrawl.id,
+        message,
+      });
+    });
+
+    crawler.on("response", async (response: ResponseMessage) => {
       await this.handleResponse(newCrawl.id, response);
-      
+
       // Publish progress
       const status = crawler.getStatus();
       Broker.publish(EventType.CRAWL_PROGRESS, {
@@ -65,9 +88,10 @@ export class CrawlerService {
       });
     });
 
-    crawler.on('complete', async (status) => {
+    crawler.on("complete", async (status) => {
       // Update crawl record
-      await db.update(crawls)
+      await db
+        .update(crawls)
         .set({
           end: new Date(),
           totalUrls: status.crawled,
@@ -90,8 +114,8 @@ export class CrawlerService {
       this.activeCrawlers.delete(projectId);
     });
 
-    crawler.on('error', (error) => {
-      console.error('Crawler error:', error);
+    crawler.on("error", (error) => {
+      console.error("Crawler error:", error);
       Broker.publish(EventType.CRAWL_STOPPED, {
         projectId,
         crawlId: newCrawl.id,
@@ -107,8 +131,8 @@ export class CrawlerService {
     });
 
     // Start crawling
-    crawler.start().catch(error => {
-      console.error('Crawler start error:', error);
+    crawler.start().catch((error) => {
+      console.error("Crawler start error:", error);
     });
 
     return newCrawl.id;
@@ -130,7 +154,10 @@ export class CrawlerService {
     return null;
   }
 
-  private async handleResponse(crawlId: number, response: ResponseMessage): Promise<void> {
+  private async handleResponse(
+    crawlId: number,
+    response: ResponseMessage
+  ): Promise<void> {
     try {
       const { parsedPage, url, ttfb, blocked, inSitemap, timeout } = response;
 
@@ -138,122 +165,140 @@ export class CrawlerService {
 
       if (!parsedPage) {
         // Handle non-HTML or error responses
-        const [pr] = await db.insert(pageReports).values({
-          crawlId,
-          url: url.href,
-          scheme: url.protocol.replace(':', ''),
-          statusCode: response.statusCode || 0,
-          urlHash: this.generateHash(url.href),
-          blockedByRobotstxt: blocked,
-          timeout,
-          inSitemap,
-          ttfb,
-          crawled: true,
-        }).returning();
+        const [pr] = await db
+          .insert(pageReports)
+          .values({
+            crawlId,
+            url: url.href,
+            scheme: url.protocol.replace(":", ""),
+            statusCode: response.statusCode || 0,
+            urlHash: this.generateHash(url.href),
+            blockedByRobotstxt: blocked,
+            timeout,
+            inSitemap,
+            ttfb,
+            crawled: true,
+          })
+          .returning();
         pageReportId = pr.id;
       } else {
         // Create page report
-        const [pr] = await db.insert(pageReports).values({
-          crawlId,
-          url: parsedPage.url,
-          scheme: parsedPage.scheme,
-          redirectUrl: parsedPage.redirectUrl,
-          refresh: parsedPage.refresh,
-          statusCode: parsedPage.statusCode,
-          contentType: parsedPage.contentType,
-          mediaType: parsedPage.mediaType,
-          lang: parsedPage.lang,
-          title: parsedPage.title,
-          description: parsedPage.description,
-          robots: parsedPage.robots,
-          canonical: parsedPage.canonical,
-          h1: parsedPage.h1,
-          h2: parsedPage.h2,
-          words: parsedPage.words,
-          size: parsedPage.size,
-          urlHash: parsedPage.urlHash,
-          redirectHash: parsedPage.redirectHash,
-          bodyHash: parsedPage.bodyHash,
-          blockedByRobotstxt: blocked,
-          inSitemap,
-          timeout,
-          ttfb,
-          crawled: true,
-        }).returning();
+        const [pr] = await db
+          .insert(pageReports)
+          .values({
+            crawlId,
+            url: parsedPage.url,
+            scheme: parsedPage.scheme,
+            redirectUrl: parsedPage.redirectUrl,
+            refresh: parsedPage.refresh,
+            statusCode: parsedPage.statusCode,
+            contentType: parsedPage.contentType,
+            mediaType: parsedPage.mediaType,
+            lang: parsedPage.lang,
+            title: parsedPage.title,
+            description: parsedPage.description,
+            robots: parsedPage.robots,
+            canonical: parsedPage.canonical,
+            h1: parsedPage.h1,
+            h2: parsedPage.h2,
+            words: parsedPage.words,
+            size: parsedPage.size,
+            urlHash: parsedPage.urlHash,
+            redirectHash: parsedPage.redirectHash,
+            bodyHash: parsedPage.bodyHash,
+            blockedByRobotstxt: blocked,
+            inSitemap,
+            timeout,
+            ttfb,
+            crawled: true,
+          })
+          .returning();
         pageReportId = pr.id;
 
         // Store links
         if (parsedPage.links && parsedPage.links.length > 0) {
-          await db.insert(links).values(parsedPage.links.map(link => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: link.url,
-            scheme: link.scheme,
-            rel: link.rel,
-            text: link.text,
-            urlHash: this.generateHash(link.url),
-            nofollow: link.nofollow,
-            sponsored: link.sponsored,
-            ugc: link.ugc,
-          })));
+          await db.insert(links).values(
+            parsedPage.links.map((link) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: link.url,
+              scheme: link.scheme,
+              rel: link.rel,
+              text: link.text,
+              urlHash: this.generateHash(link.url),
+              nofollow: link.nofollow,
+              sponsored: link.sponsored,
+              ugc: link.ugc,
+            }))
+          );
         }
 
         // Store external links
         if (parsedPage.externalLinks && parsedPage.externalLinks.length > 0) {
-          await db.insert(externalLinks).values(parsedPage.externalLinks.map(link => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: link.url,
-            scheme: link.scheme || null,
-            rel: link.rel,
-            text: link.text,
-            urlHash: this.generateHash(link.url),
-            nofollow: link.nofollow,
-            sponsored: link.sponsored,
-            ugc: link.ugc,
-          })));
+          await db.insert(externalLinks).values(
+            parsedPage.externalLinks.map((link) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: link.url,
+              scheme: link.scheme || null,
+              rel: link.rel,
+              text: link.text,
+              urlHash: this.generateHash(link.url),
+              nofollow: link.nofollow,
+              sponsored: link.sponsored,
+              ugc: link.ugc,
+            }))
+          );
         }
 
         // Store images
         if (parsedPage.images && parsedPage.images.length > 0) {
-          await db.insert(images).values(parsedPage.images.map(img => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: img.url,
-            alt: img.alt,
-          })));
+          await db.insert(images).values(
+            parsedPage.images.map((img) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: img.url,
+              alt: img.alt,
+            }))
+          );
         }
 
         // Store scripts
         if (parsedPage.scripts && parsedPage.scripts.length > 0) {
-          await db.insert(scripts).values(parsedPage.scripts.map(script => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: script.url,
-          })));
+          await db.insert(scripts).values(
+            parsedPage.scripts.map((script) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: script.url,
+            }))
+          );
         }
 
         // Store styles
         if (parsedPage.styles && parsedPage.styles.length > 0) {
-          await db.insert(styles).values(parsedPage.styles.map(style => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: style.url,
-          })));
+          await db.insert(styles).values(
+            parsedPage.styles.map((style) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: style.url,
+            }))
+          );
         }
 
         // Store videos
         if (parsedPage.videos && parsedPage.videos.length > 0) {
-          await db.insert(videos).values(parsedPage.videos.map(video => ({
-            pagereportId: pageReportId,
-            crawlId,
-            url: video.url,
-            poster: video.poster,
-          })));
+          await db.insert(videos).values(
+            parsedPage.videos.map((video) => ({
+              pagereportId: pageReportId,
+              crawlId,
+              url: video.url,
+              poster: video.poster,
+            }))
+          );
         }
       }
     } catch (error) {
-      console.error('Error handling response:', error);
+      console.error("Error handling response:", error);
     }
   }
 
@@ -265,36 +310,41 @@ export class CrawlerService {
       });
 
       const analyzer = new IssueAnalyzer();
-      
+
       for (const report of reports) {
         const foundIssues = analyzer.analyze(report as any);
-        
+
         // Create issue records
         if (foundIssues.length > 0) {
-          await db.insert(issues).values(foundIssues.map(issueTypeId => ({
-            pagereportId: report.id,
-            crawlId,
-            issueTypeId,
-          })));
+          await db.insert(issues).values(
+            foundIssues.map((issueTypeId) => ({
+              pagereportId: report.id,
+              crawlId,
+              issueTypeId,
+            }))
+          );
         }
       }
 
       // Update total issues count
-      const result = await db.select({ value: count() }).from(issues).where(eq(issues.crawlId, crawlId));
+      const result = await db
+        .select({ value: count() })
+        .from(issues)
+        .where(eq(issues.crawlId, crawlId));
       const totalIssuesCount = result[0].value;
-      
-      await db.update(crawls)
+
+      await db
+        .update(crawls)
         .set({ totalIssues: totalIssuesCount, issuesEnd: new Date() })
         .where(eq(crawls.id, crawlId));
-
     } catch (error) {
-      console.error('Error analyzing issues:', error);
+      console.error("Error analyzing issues:", error);
     }
   }
 
   private generateHash(input: string): string {
-    const crypto = require('crypto');
-    return crypto.createHash('sha256').update(input).digest('hex');
+    const crypto = require("crypto");
+    return crypto.createHash("sha256").update(input).digest("hex");
   }
 }
 

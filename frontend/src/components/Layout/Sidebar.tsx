@@ -121,7 +121,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     to={item.path}
                     onClick={onClose}
                     className={`
-                      w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
+                      w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-xl transition-all duration-200
                       ${
                         active
                           ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50"

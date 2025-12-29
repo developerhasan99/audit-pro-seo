@@ -1,11 +1,11 @@
-import { URL } from 'url';
-import { EventEmitter } from 'events';
-import { HttpClient } from './HttpClient';
-import { RobotsChecker } from './RobotsChecker';
-import { SitemapChecker } from './SitemapChecker';
-import { UrlStorage } from './UrlStorage';
-import { Queue, QueueItem } from './Queue';
-import { HtmlParser, ParsedPage } from './HtmlParser';
+import { URL } from "url";
+import { EventEmitter } from "events";
+import { HttpClient } from "./HttpClient";
+import { RobotsChecker } from "./RobotsChecker";
+import { SitemapChecker } from "./SitemapChecker";
+import { UrlStorage } from "./UrlStorage";
+import { Queue, QueueItem } from "./Queue";
+import { HtmlParser, ParsedPage } from "./HtmlParser";
 
 export interface CrawlerOptions {
   crawlLimit?: number;
@@ -55,19 +55,19 @@ export class Crawler extends EventEmitter {
 
   constructor(url: string, options: CrawlerOptions = {}) {
     super();
-    
+
     this.baseUrl = new URL(url);
     this.options = options;
-    
+
     this.httpClient = new HttpClient({
       userAgent: options.userAgent,
       basicAuth: options.basicAuth,
     });
-    
+
     this.urlStorage = new UrlStorage();
     this.sitemapStorage = new UrlStorage();
     this.queue = new Queue();
-    
+
     this.status = {
       crawled: 0,
       discovered: 0,
@@ -77,7 +77,7 @@ export class Crawler extends EventEmitter {
 
   async start(): Promise<void> {
     if (this.running) {
-      throw new Error('Crawler is already running');
+      throw new Error("Crawler is already running");
     }
 
     this.running = true;
@@ -86,35 +86,40 @@ export class Crawler extends EventEmitter {
     try {
       // Setup robots.txt
       if (!this.options.ignoreRobotsTxt) {
+        this.emit("status_update", "Fetching robots.txt...");
         this.robotsChecker = new RobotsChecker(
           this.baseUrl.href,
           this.httpClient.getUserAgent()
         );
         await this.robotsChecker.fetch(this.httpClient);
+        this.emit("status_update", "robots.txt fetched and parsed.");
       }
 
       // Setup sitemaps
       if (this.options.crawlSitemap) {
+        this.emit("status_update", "Searching for sitemaps...");
         await this.setupSitemaps();
+        this.emit("status_update", "Sitemaps processed.");
       }
 
       // Add initial URL to queue
       await this.addRequest({
         url: this.baseUrl,
-        method: 'GET',
+        method: "GET",
       });
 
       // Emit initial response for the starting URL to show activity
-      this.emit('progress', this.status);
+      this.emit("progress", this.status);
 
       // Start crawling
+      this.emit("status_update", `Starting crawl of ${this.baseUrl.href}`);
       await this.crawl();
     } catch (error) {
-      this.emit('error', error);
+      this.emit("error", error);
     } finally {
       this.running = false;
       this.status.crawling = false;
-      this.emit('complete', this.status);
+      this.emit("complete", this.status);
     }
   }
 
@@ -140,7 +145,7 @@ export class Crawler extends EventEmitter {
     // Check robots.txt
     if (this.robotsChecker && !this.options.ignoreRobotsTxt) {
       if (!this.robotsChecker.isAllowed(urlString)) {
-        this.emit('response', {
+        this.emit("response", {
           url: request.url,
           blocked: true,
           inSitemap: this.sitemapStorage.has(urlString),
@@ -171,7 +176,7 @@ export class Crawler extends EventEmitter {
 
   private async setupSitemaps(): Promise<void> {
     this.sitemapChecker = new SitemapChecker();
-    
+
     // Try default sitemap location
     const defaultSitemapUrl = `${this.baseUrl.protocol}//${this.baseUrl.host}/sitemap.xml`;
     await this.sitemapChecker.fetch(defaultSitemapUrl);
@@ -218,7 +223,10 @@ export class Crawler extends EventEmitter {
       }
 
       // Check crawl limit
-      if (this.options.crawlLimit && this.status.crawled >= this.options.crawlLimit) {
+      if (
+        this.options.crawlLimit &&
+        this.status.crawled >= this.options.crawlLimit
+      ) {
         break;
       }
 
@@ -235,17 +243,21 @@ export class Crawler extends EventEmitter {
     const inSitemap = this.sitemapStorage.has(urlString);
 
     try {
-      const method = request.method || 'GET';
-      const { response, ttfb } = method === 'HEAD'
-        ? await this.httpClient.head(urlString)
-        : await this.httpClient.get(urlString);
+      const method = request.method || "GET";
+      const { response, ttfb } =
+        method === "HEAD"
+          ? await this.httpClient.head(urlString)
+          : await this.httpClient.get(urlString);
 
       this.status.crawled++;
 
       // Parse HTML if it's a successful HTML response
       let parsedPage: ParsedPage | undefined;
-      
-      if (response.status === 200 && response.headers['content-type']?.includes('text/html')) {
+
+      if (
+        response.status === 200 &&
+        response.headers["content-type"]?.includes("text/html")
+      ) {
         parsedPage = HtmlParser.parse(
           response.data,
           urlString,
@@ -258,7 +270,7 @@ export class Crawler extends EventEmitter {
           for (const link of parsedPage.links) {
             try {
               const linkUrl = new URL(link.url);
-              
+
               // Check nofollow
               if (link.nofollow && !this.options.followNofollow) {
                 continue;
@@ -266,7 +278,7 @@ export class Crawler extends EventEmitter {
 
               await this.addRequest({
                 url: linkUrl,
-                method: 'GET',
+                method: "GET",
               });
             } catch (error) {
               // Invalid URL, skip
@@ -276,7 +288,7 @@ export class Crawler extends EventEmitter {
       }
 
       // Emit response
-      this.emit('response', {
+      this.emit("response", {
         url: request.url,
         parsedPage,
         ttfb,
@@ -285,11 +297,10 @@ export class Crawler extends EventEmitter {
         timeout: false,
         statusCode: response.status,
       } as ResponseMessage);
-
     } catch (error: any) {
-      const isTimeout = error.message === 'Request timeout';
-      
-      this.emit('response', {
+      const isTimeout = error.message === "Request timeout";
+
+      this.emit("response", {
         url: request.url,
         error,
         ttfb: 0,
@@ -314,6 +325,6 @@ export class Crawler extends EventEmitter {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
