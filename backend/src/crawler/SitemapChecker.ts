@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { parseStringPromise } from 'xml2js';
-
+import axios from "axios";
+import { parseStringPromise } from "xml2js";
+import { EventEmitter } from "events";
 
 export interface SitemapUrl {
   loc: string;
@@ -9,16 +9,17 @@ export interface SitemapUrl {
   priority?: string;
 }
 
-export class SitemapChecker {
+export class SitemapChecker extends EventEmitter {
   private sitemapUrls: Set<string> = new Set();
   private exists: boolean = false;
 
   async fetch(sitemapUrl: string): Promise<void> {
     try {
+      this.emit("status_update", `Fetching sitemap: ${sitemapUrl}`);
       const response = await axios.get(sitemapUrl, {
-        timeout: 30000,
+        timeout: 5000, // Reduced from 30s to 5s for faster sitemap discovery
         headers: {
-          'User-Agent': 'AuditProSEO/1.0 (+https://auditproseo.com)',
+          "User-Agent": "AuditProSEO/1.0 (+https://auditproseo.com)",
         },
       });
 
@@ -62,7 +63,7 @@ export class SitemapChecker {
         }
       }
     } catch (error) {
-      console.error('Error parsing sitemap:', error);
+      console.error("Error parsing sitemap:", error);
     }
   }
 

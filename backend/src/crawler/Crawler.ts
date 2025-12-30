@@ -177,9 +177,10 @@ export class Crawler extends EventEmitter {
   private async setupSitemaps(): Promise<void> {
     this.sitemapChecker = new SitemapChecker();
 
-    // Try default sitemap location
-    const defaultSitemapUrl = `${this.baseUrl.protocol}//${this.baseUrl.host}/sitemap.xml`;
-    await this.sitemapChecker.fetch(defaultSitemapUrl);
+    // Forward sitemap checker events to crawler
+    this.sitemapChecker.on("status_update", (message: string) => {
+      this.emit("status_update", message);
+    });
 
     // Try sitemaps from robots.txt
     if (this.robotsChecker) {
@@ -187,6 +188,10 @@ export class Crawler extends EventEmitter {
       for (const sitemapUrl of robotsSitemaps) {
         await this.sitemapChecker.fetch(sitemapUrl);
       }
+    } else {
+      // Try default sitemap location
+      const defaultSitemapUrl = `${this.baseUrl.protocol}//${this.baseUrl.host}/sitemap.xml`;
+      await this.sitemapChecker.fetch(defaultSitemapUrl);
     }
 
     // Store sitemap URLs
