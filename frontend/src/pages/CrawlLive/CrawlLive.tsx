@@ -335,7 +335,7 @@ export default function CrawlLive() {
                 {crawledUrls.map((url, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-transparent hover:border-slate-200 group"
+                    className="flex justify-between items-center gap-4 p-4 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-transparent hover:border-slate-200 group"
                   >
                     <div className="flex items-center space-x-4 overflow-hidden">
                       <div
@@ -348,7 +348,7 @@ export default function CrawlLive() {
                       </span>
                     </div>
                     <span
-                      className={`px-3 py-1 text-xs font-black rounded-lg ${
+                      className={`shrink-0 px-3 py-1 text-xs font-medium tracking-tight rounded-full ${
                         url.statusCode >= 200 && url.statusCode < 300
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
