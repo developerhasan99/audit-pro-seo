@@ -29,7 +29,33 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await projectsApi.getAll();
-      set({ projects: response.projects, loading: false });
+
+      set((state) => {
+        let nextSelectedId = state.selectedProjectId;
+        let nextCurrentProject = state.currentProject;
+
+        // Auto-select first project if none is selected
+        if (!nextSelectedId && response.projects.length > 0) {
+          nextSelectedId = response.projects[0].id;
+          nextCurrentProject = response.projects[0];
+        } else if (nextSelectedId && response.projects.length > 0) {
+          // If selected project no longer exists in value list (e.g. was deleted elsewhere), fallback to first
+          const exists = response.projects.find(
+            (p: Project) => p.id === nextSelectedId
+          );
+          if (!exists) {
+            nextSelectedId = response.projects[0].id;
+            nextCurrentProject = response.projects[0];
+          }
+        }
+
+        return {
+          projects: response.projects,
+          loading: false,
+          selectedProjectId: nextSelectedId,
+          currentProject: nextCurrentProject || state.currentProject, // Keep existing if valid
+        };
+      });
     } catch (error: any) {
       set({
         error: error.response?.data?.error || "Failed to fetch projects",

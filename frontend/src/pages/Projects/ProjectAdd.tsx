@@ -11,8 +11,6 @@ import {
   ChevronLeft,
   Plus,
   Zap,
-  Settings,
-  ArrowRight,
   Sparkles,
 } from "lucide-react";
 import { CustomSwitch } from "../../components/Common/CustomSwitch";
