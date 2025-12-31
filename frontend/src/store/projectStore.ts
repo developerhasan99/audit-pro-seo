@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { projectsApi, Project } from '../api/projects.api';
+import { create } from "zustand";
+import { projectsApi, Project } from "../api/projects.api";
 
 interface ProjectState {
   projects: Project[];
@@ -31,9 +31,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const response = await projectsApi.getAll();
       set({ projects: response.projects, loading: false });
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.error || 'Failed to fetch projects', 
-        loading: false 
+      set({
+        error: error.response?.data?.error || "Failed to fetch projects",
+        loading: false,
       });
     }
   },
@@ -44,9 +44,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const response = await projectsApi.getById(id);
       set({ currentProject: response.project, loading: false });
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.error || 'Failed to fetch project', 
-        loading: false 
+      set({
+        error: error.response?.data?.error || "Failed to fetch project",
+        loading: false,
       });
     }
   },
@@ -54,12 +54,21 @@ export const useProjectStore = create<ProjectState>((set) => ({
   createProject: async (data: any) => {
     set({ loading: true, error: null });
     try {
-      await projectsApi.create(data);
-      set({ loading: false });
+      const response = await projectsApi.create(data);
+      // Assuming response.project contains the created project
+      const newProject = response.project;
+
+      set((state) => ({
+        projects: [newProject, ...state.projects],
+        selectedProjectId: newProject.id,
+        // We set currentProject so components using it update immediately
+        currentProject: newProject,
+        loading: false,
+      }));
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.error || 'Failed to create project', 
-        loading: false 
+      set({
+        error: error.response?.data?.error || "Failed to create project",
+        loading: false,
       });
       throw error;
     }
@@ -68,12 +77,23 @@ export const useProjectStore = create<ProjectState>((set) => ({
   updateProject: async (id: number, data: any) => {
     set({ loading: true, error: null });
     try {
-      await projectsApi.update(id, data);
-      set({ loading: false });
+      const response = await projectsApi.update(id, data);
+      set((state) => ({
+        // Update the project in the list
+        projects: state.projects.map((p) =>
+          p.id === id ? { ...p, ...response.project } : p
+        ),
+        // Update currentProject if it's the one being modified
+        currentProject:
+          state.currentProject?.id === id
+            ? { ...state.currentProject, ...response.project }
+            : state.currentProject,
+        loading: false,
+      }));
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.error || 'Failed to update project', 
-        loading: false 
+      set({
+        error: error.response?.data?.error || "Failed to update project",
+        loading: false,
       });
       throw error;
     }
@@ -83,14 +103,38 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set({ loading: true, error: null });
     try {
       await projectsApi.delete(id);
-      set((state) => ({
-        projects: state.projects.filter((p) => p.id !== id),
-        loading: false,
-      }));
+      set((state) => {
+        const remainingProjects = state.projects.filter((p) => p.id !== id);
+        let nextSelectedId = state.selectedProjectId;
+        let nextCurrentProject = state.currentProject;
+
+        // If the deleted project was the selected one
+        if (state.selectedProjectId === id) {
+          // Select the first available project, or null if none remain
+          if (remainingProjects.length > 0) {
+            nextSelectedId = remainingProjects[0].id;
+            // Ideally we'd have the full project object, but for now we might clear it
+            // and let the component fetch it, or if projects list has enough info:
+            nextCurrentProject = remainingProjects[0];
+            // Note: If projects list items are summary only, fetching might be needed by the consumer
+            // But this provides immediate feedback
+          } else {
+            nextSelectedId = null;
+            nextCurrentProject = null;
+          }
+        }
+
+        return {
+          projects: remainingProjects,
+          selectedProjectId: nextSelectedId,
+          currentProject: nextCurrentProject,
+          loading: false,
+        };
+      });
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.error || 'Failed to delete project', 
-        loading: false 
+      set({
+        error: error.response?.data?.error || "Failed to delete project",
+        loading: false,
       });
     }
   },
