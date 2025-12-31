@@ -19,7 +19,17 @@ import { CustomSwitch } from "../../components/Common/CustomSwitch";
 
 export default function ProjectAdd() {
   const navigate = useNavigate();
-  const { createProject, loading, error, clearError } = useProjectStore();
+  const { createProject, loading, error, clearError, projects, fetchProjects } =
+    useProjectStore();
+
+  // Fetch projects on mount to check if this is the first one
+  useState(() => {
+    if (projects.length === 0) {
+      fetchProjects();
+    }
+  });
+
+  const isFirstProject = projects.length === 0 && !loading;
 
   const [formData, setFormData] = useState({
     url: "",
@@ -88,19 +98,23 @@ export default function ProjectAdd() {
   ];
 
   return (
-    <Layout title="New Project">
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-slate-50/30">
+    <Layout title="New Project" isOnboarding={isFirstProject}>
+      <div
+        className={`flex flex-col items-center justify-center ${isFirstProject ? "" : "min-h-[calc(100vh-80px)]"} bg-slate-50/30`}
+      >
         <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Link
-            to="/projects"
-            className="inline-flex items-center space-x-2 text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors mb-6 group"
-            onClick={() => clearError()}
-          >
-            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="uppercase tracking-widest text-[11px]">
-              Back to Projects
-            </span>
-          </Link>
+          {!isFirstProject && (
+            <Link
+              to="/projects"
+              className="inline-flex items-center space-x-2 text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors mb-6 group"
+              onClick={() => clearError()}
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span className="uppercase tracking-widest text-[11px]">
+                Back to Projects
+              </span>
+            </Link>
+          )}
 
           {/* Custom Card Implementation */}
           <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-xl">
@@ -110,10 +124,12 @@ export default function ProjectAdd() {
               </div>
               <div>
                 <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-3">
-                  Add Project
+                  {isFirstProject ? "Welcome to AuditPro" : "Add Project"}
                 </h2>
                 <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">
-                  Configure your audit intelligence
+                  {isFirstProject
+                    ? "Add your first project to continue."
+                    : "Configure your audit intelligence"}
                 </p>
               </div>
               <div className="absolute top-2 right- 2">
