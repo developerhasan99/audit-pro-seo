@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useProjectStore } from "../../store/projectStore";
 import {
   LayoutDashboard,
-  PlusCircle,
   Search,
   Network,
   ClipboardList,
@@ -12,6 +11,7 @@ import {
   ChevronRight,
   X,
   Download,
+  ScanSearch,
 } from "lucide-react";
 import ProjectSelector from "../Sidebar/ProjectSelector";
 
@@ -41,8 +41,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           path: projectIdStr ? `/dashboard/${projectIdStr}` : "/",
         },
         {
-          name: "New Audit",
-          icon: PlusCircle,
+          name: "Site Audit",
+          icon: ScanSearch,
           path: projectIdStr ? `/crawl/live/${projectIdStr}` : "/",
         },
       ],
