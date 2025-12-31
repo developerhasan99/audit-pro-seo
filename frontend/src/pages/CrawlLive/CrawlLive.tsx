@@ -168,7 +168,7 @@ export default function CrawlLive() {
   const isCrawling = crawlStatus?.crawling;
 
   return (
-    <Layout>
+    <Layout title="Live Crawl Audit">
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
