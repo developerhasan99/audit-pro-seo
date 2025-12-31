@@ -5,6 +5,7 @@ interface ProjectState {
   projects: Project[];
   currentProject: Project | null;
   loading: boolean;
+  initialized: boolean;
   error: string | null;
   selectedProjectId: number | null;
   fetchProjects: () => Promise<void>;
@@ -21,6 +22,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
   currentProject: null,
   selectedProjectId: null,
   loading: false,
+  initialized: false,
   error: null,
 
   setSelectedProjectId: (id: number | null) => set({ selectedProjectId: id }),
@@ -52,6 +54,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
         return {
           projects: response.projects,
           loading: false,
+          initialized: true,
           selectedProjectId: nextSelectedId,
           currentProject: nextCurrentProject || state.currentProject, // Keep existing if valid
         };
@@ -60,6 +63,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
       set({
         error: error.response?.data?.error || "Failed to fetch projects",
         loading: false,
+        initialized: true,
       });
     }
   },

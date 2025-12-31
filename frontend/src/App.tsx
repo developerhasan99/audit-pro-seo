@@ -23,21 +23,36 @@ import Account from "./pages/Account/Account";
 
 import Home from "./pages/Home/Home";
 import { useProjectStore } from "./store/projectStore";
+import FullPageLoader from "./components/Common/FullPageLoader";
 
 // Wrapper to require at least one project
 function RequireProject({ children }: { children: JSX.Element }) {
-  const { projects, loading, fetchProjects } = useProjectStore();
-  const { user } = useAuthStore();
+  const { projects, error } = useProjectStore();
 
-  // Use ref to track if multiple fetches have triggered
-  // Ideally this should be handled better, but simplistically:
-  useEffect(() => {
-    if (user && projects.length === 0) {
-      fetchProjects();
-    }
-  }, [user, fetchProjects, projects.length]);
+  // If there was an error fetching, show it instead of redirecting
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-4">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center border border-red-100">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">
+            Unable to load projects
+          </h3>
+          <p className="text-sm text-slate-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  if (projects.length === 0 && !loading) {
+  if (projects.length === 0) {
     return <Navigate to="/projects/add" />;
   }
 
@@ -45,18 +60,26 @@ function RequireProject({ children }: { children: JSX.Element }) {
 }
 
 function App() {
-  const { user, initialized, checkAuth } = useAuthStore();
+  const { user, initialized: authInitialized, checkAuth } = useAuthStore();
+  const { initialized: projectInitialized, fetchProjects } = useProjectStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  if (!initialized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+  // Fetch projects when user is authenticated
+  useEffect(() => {
+    if (user && !projectInitialized) {
+      fetchProjects();
+    }
+  }, [user, projectInitialized, fetchProjects]);
+
+  // Consolidated loading state: Wait for Auth, and if user exists, wait for Projects
+  // This prevents flickering by keeping a single loader until EVERYTHING is ready
+  const isAppReady = authInitialized && (!user || projectInitialized);
+
+  if (!isAppReady) {
+    return <FullPageLoader text="Initializing Workspace..." />;
   }
 
   return (
