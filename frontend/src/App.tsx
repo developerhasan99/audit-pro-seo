@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "./store/authStore";
 
 // Pages
@@ -60,6 +61,8 @@ function RequireProject({ children }: { children: JSX.Element }) {
   return children;
 }
 
+const queryClient = new QueryClient();
+
 function App() {
   const { user, initialized: authInitialized, checkAuth } = useAuthStore();
   const { initialized: projectInitialized, fetchProjects } = useProjectStore();
@@ -84,162 +87,164 @@ function App() {
   }
 
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Routes>
-        {/* Public routes */}
-        <Route
-          path="/signin"
-          element={!user ? <SignIn /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/signup"
-          element={!user ? <SignUp /> : <Navigate to="/" />}
-        />
+    <QueryClientProvider client={queryClient}>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Routes>
+          {/* Public routes */}
+          <Route
+            path="/signin"
+            element={!user ? <SignIn /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/signup"
+            element={!user ? <SignUp /> : <Navigate to="/" />}
+          />
 
-        {/* Protected routes */}
-        <Route
-          path="/projects/add"
-          element={user ? <ProjectAdd /> : <Navigate to="/signin" />}
-        />
+          {/* Protected routes */}
+          <Route
+            path="/projects/add"
+            element={user ? <ProjectAdd /> : <Navigate to="/signin" />}
+          />
 
-        {/* Routes requiring a project */}
-        <Route
-          path="/"
-          element={
-            user ? (
-              <RequireProject>
-                <Home />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            user ? (
-              <RequireProject>
-                <ProjectList />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/recent-audits"
-          element={
-            user ? (
-              <RequireProject>
-                <RecentAudits />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/dashboard/:projectId"
-          element={
-            user ? (
-              <RequireProject>
-                <Dashboard />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/issues/:projectId"
-          element={
-            user ? (
-              <RequireProject>
-                <Issues />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/issues/:projectId/view"
-          element={
-            user ? (
-              <RequireProject>
-                <IssuesView />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/explorer/:projectId"
-          element={
-            user ? (
-              <RequireProject>
-                <Explorer />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/resources/:projectId/:pageReportId"
-          element={
-            user ? (
-              <RequireProject>
-                <Resources />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/export/:projectId"
-          element={
-            user ? (
-              <RequireProject>
-                <Export />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/crawl/live/:projectId"
-          element={
-            user ? (
-              <RequireProject>
-                <CrawlLive />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
-        <Route
-          path="/account"
-          element={
-            user ? (
-              <RequireProject>
-                <Account />
-              </RequireProject>
-            ) : (
-              <Navigate to="/signin" />
-            )
-          }
-        />
+          {/* Routes requiring a project */}
+          <Route
+            path="/"
+            element={
+              user ? (
+                <RequireProject>
+                  <Home />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              user ? (
+                <RequireProject>
+                  <ProjectList />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/recent-audits"
+            element={
+              user ? (
+                <RequireProject>
+                  <RecentAudits />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/dashboard/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <Dashboard />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/issues/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <Issues />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/issues/:projectId/view"
+            element={
+              user ? (
+                <RequireProject>
+                  <IssuesView />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/explorer/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <Explorer />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/resources/:projectId/:pageReportId"
+            element={
+              user ? (
+                <RequireProject>
+                  <Resources />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/export/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <Export />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/crawl/live/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <CrawlLive />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              user ? (
+                <RequireProject>
+                  <Account />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
   );
 }
 

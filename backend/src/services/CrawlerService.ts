@@ -146,6 +146,10 @@ export class CrawlerService {
     }
   }
 
+  async deleteCrawl(crawlId: number): Promise<void> {
+    await db.delete(crawls).where(eq(crawls.id, crawlId));
+  }
+
   getCrawlStatus(projectId: number) {
     const active = this.activeCrawlers.get(projectId);
     if (active) {

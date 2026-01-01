@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 export interface Crawl {
   id: number;
@@ -32,6 +32,11 @@ export const crawlsApi = {
 
   getHistory: async (projectId: number): Promise<Crawl[]> => {
     const response = await apiClient.get(`/crawl/history/${projectId}`);
+    return response.data;
+  },
+
+  delete: async (crawlId: number) => {
+    const response = await apiClient.delete(`/crawl/${crawlId}`);
     return response.data;
   },
 };
