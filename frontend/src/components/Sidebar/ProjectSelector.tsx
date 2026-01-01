@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useProjectStore } from "../../store/projectStore";
 import { ChevronDown, Plus, Globe, Check, SquareGanttIcon } from "lucide-react";
 
@@ -9,7 +9,9 @@ interface ProjectSelectorProps {
 
 export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   const navigate = useNavigate();
-  const { projects, currentProject, fetchProjects } = useProjectStore();
+  const location = useLocation();
+  const { projects, currentProject, fetchProjects, fetchProject } =
+    useProjectStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -33,6 +35,13 @@ export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   }, []);
 
   const handleProjectSelect = (projectId: number) => {
+    if (location.pathname === "/recent-audits") {
+      fetchProject(projectId);
+      setIsOpen(false);
+      if (onClose) onClose();
+      return;
+    }
+
     navigate(`/dashboard/${projectId}`);
     setIsOpen(false);
     if (onClose) onClose();
