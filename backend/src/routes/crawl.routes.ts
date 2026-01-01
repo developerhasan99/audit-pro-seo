@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { projects, crawls } from "../db/schema";
+import { projects, crawls, pageReports } from "../db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { AppError, asyncHandler } from "../middleware/error.middleware";
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -147,6 +147,47 @@ router.delete(
     res.json({
       message: "Crawl deleted successfully",
     });
+  })
+);
+
+// Get pages for site structure
+router.get(
+  "/:crawlId/pages",
+  asyncHandler(async (req: Request, res: Response) => {
+    const crawlId = parseInt(req.params.crawlId);
+
+    // Get crawl to check project ownership
+    const crawl = await db.query.crawls.findFirst({
+      where: eq(crawls.id, crawlId),
+    });
+
+    if (!crawl) {
+      throw new AppError("Crawl not found", 404);
+    }
+
+    // Verify project belongs to user
+    const project = await db.query.projects.findFirst({
+      where: and(
+        eq(projects.id, crawl.projectId),
+        eq(projects.userId, req.user!.id)
+      ),
+    });
+
+    if (!project) {
+      throw new AppError("Unauthorized", 403);
+    }
+
+    // Fetch pages
+    const pages = await db.query.pageReports.findMany({
+      where: eq(pageReports.crawlId, crawlId),
+      columns: {
+        url: true,
+        title: true,
+        statusCode: true,
+      },
+    });
+
+    res.json({ pages });
   })
 );
 

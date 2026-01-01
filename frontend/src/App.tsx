@@ -24,6 +24,7 @@ import CrawlLive from "./pages/CrawlLive/CrawlLive";
 import Account from "./pages/Account/Account";
 
 import Home from "./pages/Home/Home";
+import SiteStructure from "./pages/SiteStructure/SiteStructure";
 import { useProjectStore } from "./store/projectStore";
 import FullPageLoader from "./components/Common/FullPageLoader";
 
@@ -221,6 +222,18 @@ function App() {
               user ? (
                 <RequireProject>
                   <CrawlLive />
+                </RequireProject>
+              ) : (
+                <Navigate to="/signin" />
+              )
+            }
+          />
+          <Route
+            path="/site-structure/:projectId"
+            element={
+              user ? (
+                <RequireProject>
+                  <SiteStructure />
                 </RequireProject>
               ) : (
                 <Navigate to="/signin" />

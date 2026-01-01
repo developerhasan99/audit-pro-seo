@@ -39,4 +39,9 @@ export const crawlsApi = {
     const response = await apiClient.delete(`/crawl/${crawlId}`);
     return response.data;
   },
+
+  getPages: async (crawlId: number) => {
+    const response = await apiClient.get(`/crawl/${crawlId}/pages`);
+    return response.data;
+  },
 };

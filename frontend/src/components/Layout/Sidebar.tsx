@@ -66,7 +66,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           icon: Search,
           path: projectIdStr ? `/explorer/${projectIdStr}` : "#",
         },
-        { name: "Site Structure", icon: Network, path: "#" },
+        {
+          name: "Site Structure",
+          icon: Network,
+          path: projectIdStr ? `/site-structure/${projectIdStr}` : "#",
+        },
         {
           name: "Export Data",
           icon: Download,
