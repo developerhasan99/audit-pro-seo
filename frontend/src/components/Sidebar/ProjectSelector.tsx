@@ -10,8 +10,13 @@ interface ProjectSelectorProps {
 export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { projects, currentProject, fetchProjects, fetchProject } =
-    useProjectStore();
+  const {
+    projects,
+    currentProject,
+    fetchProjects,
+    fetchProject,
+    setSelectedProjectId,
+  } = useProjectStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +40,7 @@ export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   }, []);
 
   const handleProjectSelect = (projectId: number) => {
+    setSelectedProjectId(projectId);
     if (location.pathname === "/recent-audits") {
       fetchProject(projectId);
       setIsOpen(false);

@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useProjectStore } from "../../store/projectStore";
 import { useCrawls, useDeleteCrawl } from "../../hooks/useCrawls";
 import Layout from "../../components/Layout/Layout";
@@ -14,9 +15,11 @@ import {
 export default function RecentAudits() {
   const navigate = useNavigate();
   const { selectedProjectId, currentProject } = useProjectStore();
-  const { data: crawls = [], isLoading } = useCrawls(
+  const { data: crawls = [], isLoading: isCrawlsLoading } = useCrawls(
     selectedProjectId || undefined
   );
+
+  const isLoading = selectedProjectId ? isCrawlsLoading : false;
   const { mutate: deleteCrawl } = useDeleteCrawl();
 
   const handleDelete = (crawlId: number, e: React.MouseEvent) => {
@@ -40,38 +43,27 @@ export default function RecentAudits() {
     return `${minutes}m ${seconds}s`;
   };
 
-  if (!selectedProjectId) {
-    return (
-      <Layout title="Recent Audits">
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-6">
-            <Activity className="w-8 h-8 text-slate-400" />
-          </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">
-            No Project Selected
-          </h2>
-          <p className="text-slate-500 max-w-sm">
-            Select a project from the sidebar to view its audit history.
+  return (
+    <Layout title="Recent Audits">
+      <div className="flex items-center flex-wrap justify-between gap-4 mb-8">
+        <div>
+          <h2 className="text-xl font-black text-slate-900">Audit History</h2>
+          <p className="text-sm font-medium text-slate-400 mt-1 hidden md:block">
+            <strong className="text-black">{crawls.length}</strong> Audits Found
+            for {currentProject?.url}
+          </p>
+          <p className="text-sm font-medium text-slate-400 mt-1 block md:hidden">
+            <strong className="text-black">{crawls.length}</strong> Recent
+            Audits
           </p>
         </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout title={`Audits: ${currentProject?.url || "Project"}`}>
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-black text-slate-900">Audit History</h2>
-            <p className="text-sm font-medium text-slate-400 mt-1">
-              Recent crawls for {currentProject?.url}
-            </p>
-          </div>
-          <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
-            {crawls.length} Audits Found
-          </div>
-        </div>
+        <Link
+          to={`/crawl/live/${selectedProjectId}`}
+          className="inline-flex items-center space-x-2 px-6 py-3 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          <span>New Crawl</span>
+        </Link>
       </div>
 
       {isLoading ? (
@@ -86,8 +78,15 @@ export default function RecentAudits() {
             Start a crawl to generate your first audit report.
           </p>
           <button
-            onClick={() => navigate(`/crawl/live/${selectedProjectId}`)}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition"
+            onClick={() =>
+              selectedProjectId && navigate(`/crawl/live/${selectedProjectId}`)
+            }
+            disabled={!selectedProjectId}
+            className={`px-6 py-3 rounded-xl font-bold transition ${
+              selectedProjectId
+                ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+            }`}
           >
             Start New Audit
           </button>
