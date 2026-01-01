@@ -14,7 +14,6 @@ import { ResponsiveContainer, Area, AreaChart } from "recharts";
 import {
   Search,
   ShieldCheck,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Lock,
