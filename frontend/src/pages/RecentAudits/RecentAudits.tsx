@@ -9,8 +9,11 @@ import {
   Trash2,
   FileText,
   CheckCircle2,
+  AlertTriangle,
+  X,
   Loader2,
 } from "lucide-react";
+import { useState } from "react";
 
 export default function RecentAudits() {
   const navigate = useNavigate();
@@ -22,10 +25,24 @@ export default function RecentAudits() {
   const isLoading = selectedProjectId ? isCrawlsLoading : false;
   const { mutate: deleteCrawl } = useDeleteCrawl();
 
-  const handleDelete = (crawlId: number, e: React.MouseEvent) => {
+  // State for deletion
+  const [auditToDelete, setAuditToDelete] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDeleteClick = (crawlId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this audit record?")) {
-      deleteCrawl(crawlId);
+    setAuditToDelete(crawlId);
+  };
+
+  const confirmDelete = () => {
+    if (auditToDelete) {
+      setDeletingId(auditToDelete);
+      deleteCrawl(auditToDelete, {
+        onSettled: () => {
+          setDeletingId(null);
+        },
+      });
+      setAuditToDelete(null);
     }
   };
 
@@ -97,17 +114,32 @@ export default function RecentAudits() {
             const healthScore = calculateHealth(crawl);
             const duration = calculateDuration(crawl.start, crawl.end);
             const isCompleted = !!crawl.end;
+            const isDeleting = deletingId === crawl.id;
 
             return (
               <div
                 key={crawl.id}
                 onClick={() =>
+                  !isDeleting &&
                   navigate(
                     `/dashboard/${selectedProjectId}?crawlId=${crawl.id}`
                   )
                 }
-                className="bg-white rounded-xl border border-slate-200 hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all duration-200 cursor-pointer flex flex-col overflow-hidden"
+                className={`bg-white rounded-xl border border-slate-200 transition-all duration-200 flex flex-col overflow-hidden relative ${
+                  isDeleting
+                    ? "opacity-80 pointer-events-none ring-2 ring-rose-100"
+                    : "hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 cursor-pointer group"
+                }`}
               >
+                {isDeleting && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-20 flex items-center justify-center flex-col">
+                    <Loader2 className="w-8 h-8 text-rose-500 animate-spin mb-2" />
+                    <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
+                      Deleting Audit...
+                    </span>
+                  </div>
+                )}
+
                 {/* Header: Date, Status, Delete */}
                 <div className="px-5 py-4 flex justify-between items-start border-b border-slate-50">
                   <div className="flex flex-col">
@@ -146,8 +178,9 @@ export default function RecentAudits() {
                     </div>
                   </div>
                   <button
-                    onClick={(e) => handleDelete(crawl.id, e)}
-                    className="p-1.5 bg-slate-50 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    onClick={(e) => handleDeleteClick(crawl.id, e)}
+                    disabled={isDeleting}
+                    className="p-1.5 bg-slate-50 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 z-10"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -275,6 +308,50 @@ export default function RecentAudits() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {auditToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setAuditToDelete(null)}
+          ></div>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden ring-1 ring-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-6 h-6 text-rose-500" />
+              </div>
+              <h3 className="text-lg font-black text-slate-900 mb-2">
+                Delete Audit Record?
+              </h3>
+              <p className="text-sm text-slate-500 mb-6">
+                This will permanently remove this audit and all its crawled
+                data. This action cannot be undone.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setAuditToDelete(null)}
+                  className="flex-1 py-2.5 px-4 bg-slate-100 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-2.5 px-4 bg-rose-500 text-white text-sm font-bold rounded-xl hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/30"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setAuditToDelete(null)}
+              className="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       )}
     </Layout>
