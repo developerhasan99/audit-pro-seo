@@ -12,6 +12,7 @@ import {
   X,
   Download,
   ScanSearch,
+  Activity,
 } from "lucide-react";
 import ProjectSelector from "../Sidebar/ProjectSelector";
 
@@ -41,7 +42,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           path: projectIdStr ? `/dashboard/${projectIdStr}` : "/",
         },
         {
-          name: "Site Audit",
+          name: "Recent Audits",
+          icon: Activity,
+          path: "/recent-audits",
+        },
+        {
+          name: "New Audit",
           icon: ScanSearch,
           path: projectIdStr ? `/crawl/live/${projectIdStr}` : "/",
         },

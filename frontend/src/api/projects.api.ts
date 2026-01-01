@@ -1,4 +1,5 @@
-import apiClient from './client';
+import apiClient from "./client";
+import { Crawl } from "./crawls.api";
 
 export interface Project {
   id: number;
@@ -15,7 +16,7 @@ export interface Project {
   checkExternalLinks?: boolean;
   archive?: boolean;
   userAgent?: string;
-  crawls?: any[];
+  crawls?: Crawl[];
 }
 
 export interface CreateProjectData {
@@ -33,7 +34,7 @@ export interface CreateProjectData {
 
 export const projectsApi = {
   getAll: async () => {
-    const response = await apiClient.get('/projects');
+    const response = await apiClient.get("/projects");
     return response.data;
   },
 
@@ -43,7 +44,7 @@ export const projectsApi = {
   },
 
   create: async (data: CreateProjectData) => {
-    const response = await apiClient.post('/projects', data);
+    const response = await apiClient.post("/projects", data);
     return response.data;
   },
 

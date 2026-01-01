@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useProjectStore } from '../../store/projectStore';
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useProjectStore } from "../../store/projectStore";
 
 export default function Home() {
   const { projects, loading, fetchProjects } = useProjectStore();
@@ -32,14 +32,6 @@ export default function Home() {
     return <Navigate to="/projects/add" replace />;
   }
 
-  // 2. Has projects -> Check the latest one
-  const latestProject = projects[0];
-  
-  // 3. No crawls -> Live Crawl page (to start an audit)
-  if (!latestProject.crawls || latestProject.crawls.length === 0) {
-    return <Navigate to={`/crawl/live/${latestProject.id}`} replace />;
-  }
-
-  // 4. Has crawls -> Dashboard
-  return <Navigate to={`/dashboard/${latestProject.id}`} replace />;
+  // 2. Has projects -> Go to the global Recent Audits Dashboard
+  return <Navigate to="/recent-audits" replace />;
 }

@@ -13,6 +13,7 @@ import SignUp from "./pages/Auth/SignUp";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import ProjectList from "./pages/Projects/ProjectList";
 import ProjectAdd from "./pages/Projects/ProjectAdd";
+import RecentAudits from "./pages/RecentAudits/RecentAudits";
 import Issues from "./pages/Issues/Issues";
 import IssuesView from "./pages/Issues/IssuesView";
 import Explorer from "./pages/Explorer/Explorer";
@@ -120,6 +121,18 @@ function App() {
             user ? (
               <RequireProject>
                 <ProjectList />
+              </RequireProject>
+            ) : (
+              <Navigate to="/signin" />
+            )
+          }
+        />
+        <Route
+          path="/recent-audits"
+          element={
+            user ? (
+              <RequireProject>
+                <RecentAudits />
               </RequireProject>
             ) : (
               <Navigate to="/signin" />
