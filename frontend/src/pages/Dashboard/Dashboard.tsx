@@ -12,8 +12,8 @@ import CrawlSelector from "../../components/Common/CrawlSelector";
 import apiClient from "../../api/client";
 import { ResponsiveContainer, Area, AreaChart } from "recharts";
 import {
-  Search,
   ShieldCheck,
+  Search,
   CheckCircle2,
   XCircle,
   Lock,
@@ -109,23 +109,23 @@ export default function Dashboard() {
 
   if (!crawl) {
     return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center">
-          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-            <Search className="w-10 h-10 text-blue-500" />
+      <Layout title="Dashboard">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] bg-white rounded-3xl border border-slate-200 p-12 text-center">
+          <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6">
+            <Search className="w-8 h-8 text-slate-400" />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 mb-4">
-            No Crawl Data Found
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+            No audit data available
           </h2>
-          <p className="text-slate-500 max-w-md mx-auto mb-8 text-lg font-medium">
-            We haven't indexed your site yet. Start your first crawl to unlock
-            premium SEO insights and issue tracking.
+          <p className="text-slate-500 max-w-sm mx-auto mb-8 font-medium">
+            Run your first crawl to analyze your site's SEO performance and
+            discover issues.
           </p>
           <Link
             to={`/crawl/live`}
-            className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-1"
+            className="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm active:scale-95"
           >
-            Start Initial Audit
+            Start First Audit
           </Link>
         </div>
       </Layout>

@@ -10,6 +10,7 @@ interface ServerConfig {
   host: string;
   port: number;
   url: string;
+  latencyMs: number;
 }
 
 interface CrawlerConfig {
@@ -40,13 +41,16 @@ const config: Config = {
   env: process.env.NODE_ENV || "development",
 
   database: {
-    url: process.env.DATABASE_URL || "postgres://audit_pro_seo:audit_pro_seo@localhost:5432/audit_pro_seo",
+    url:
+      process.env.DATABASE_URL ||
+      "postgres://audit_pro_seo:audit_pro_seo@localhost:5432/audit_pro_seo",
   },
 
   server: {
     host: process.env.SERVER_HOST || "0.0.0.0",
     port: parseInt(process.env.PORT || "3000", 10),
     url: process.env.SERVER_URL || "http://localhost:3000",
+    latencyMs: parseInt(process.env.LATENCY_MS || "0", 10),
   },
 
   session: {
