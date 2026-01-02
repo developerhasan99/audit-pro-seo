@@ -8,19 +8,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-interface CrawlSelectorProps {
-  projectId: number;
-}
-
-export default function CrawlSelector({ projectId }: CrawlSelectorProps) {
-  const { crawls, selectedCrawlId, fetchHistory, setSelectedCrawlId, loading } =
+export default function CrawlSelector() {
+  const { crawls, selectedCrawlId, setSelectedCrawlId, loading } =
     useCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchHistory(projectId);
-  }, [projectId, fetchHistory]);
 
   // Handle click outside to close dropdown
   useEffect(() => {

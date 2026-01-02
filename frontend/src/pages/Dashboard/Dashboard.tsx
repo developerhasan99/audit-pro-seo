@@ -37,9 +37,16 @@ export default function Dashboard() {
     loading: projectLoading,
     fetchProject,
   } = useProjectStore();
-  const { selectedCrawlId } = useCrawlStore();
+  const { selectedCrawlId, fetchHistory } = useCrawlStore();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Fetch crawl history when project changes
+  useEffect(() => {
+    if (projectId) {
+      fetchHistory(parseInt(projectId));
+    }
+  }, [projectId, fetchHistory]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -131,7 +138,7 @@ export default function Dashboard() {
       <div className="space-y-8">
         {/* Top Header Row with Crawl Selector */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <CrawlSelector projectId={parseInt(projectId!)} />
+          <CrawlSelector />
           <div className="text-xs font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full md:bg-transparent md:px-0">
             Last Audit: {new Date(crawl.start).toLocaleDateString()}
           </div>
