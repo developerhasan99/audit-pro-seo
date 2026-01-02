@@ -131,9 +131,7 @@ export default function Dashboard() {
       <div className="space-y-8">
         {/* Top Header Row with Crawl Selector */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="w-full md:w-auto flex items-center space-x-4 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
-            <CrawlSelector projectId={parseInt(projectId!)} />
-          </div>
+          <CrawlSelector projectId={parseInt(projectId!)} />
           <div className="text-xs font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full md:bg-transparent md:px-0">
             Last Audit: {new Date(crawl.start).toLocaleDateString()}
           </div>

@@ -23,7 +23,6 @@ import Export from "./pages/Export/Export";
 import CrawlLive from "./pages/CrawlLive/CrawlLive";
 import Account from "./pages/Account/Account";
 
-import Home from "./pages/Home/Home";
 import SiteStructure from "./pages/SiteStructure/SiteStructure";
 import { useProjectStore } from "./store/projectStore";
 import FullPageLoader from "./components/Common/FullPageLoader";
@@ -67,6 +66,7 @@ const queryClient = new QueryClient();
 function App() {
   const { user, initialized: authInitialized, checkAuth } = useAuthStore();
   const { initialized: projectInitialized, fetchProjects } = useProjectStore();
+  const { projects, error } = useProjectStore();
 
   useEffect(() => {
     checkAuth();
@@ -113,7 +113,7 @@ function App() {
             element={
               user ? (
                 <RequireProject>
-                  <Home />
+                  <Navigate to={`/dashboard/${projects[0].id}`} />
                 </RequireProject>
               ) : (
                 <Navigate to="/signin" />
