@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { crawlsApi } from "../../api/crawls.api";
 import { useCrawls } from "../../hooks/useCrawls";
@@ -166,11 +165,8 @@ const TreeNode = ({ node, level = 0 }: { node: PageNode; level?: number }) => {
 };
 
 export default function SiteStructure() {
-  const { projectId } = useParams();
-  const { currentProject } = useProjectStore();
-  const { data: crawls = [] } = useCrawls(
-    projectId ? parseInt(projectId) : null
-  );
+  const { selectedProjectId: projectId, currentProject } = useProjectStore();
+  const { data: crawls = [] } = useCrawls(projectId);
 
   // Get latest crawl
   const latestCrawl = crawls[0];

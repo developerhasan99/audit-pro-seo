@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useProjectStore } from "../../store/projectStore";
 import { useCrawlStore } from "../../store/crawlStore";
 import Layout from "../../components/Layout/Layout";
@@ -31,9 +31,8 @@ const mockTrendData = [
 ];
 
 export default function Dashboard() {
-  const { projectId } = useParams<{ projectId: string }>();
   const {
-    currentProject,
+    selectedProjectId,
     loading: projectLoading,
     fetchProject,
   } = useProjectStore();
@@ -43,20 +42,20 @@ export default function Dashboard() {
 
   // Fetch crawl history when project changes
   useEffect(() => {
-    if (projectId) {
-      fetchHistory(parseInt(projectId));
+    if (selectedProjectId) {
+      fetchHistory(selectedProjectId);
     }
-  }, [projectId, fetchHistory]);
+  }, [selectedProjectId, fetchHistory]);
 
   useEffect(() => {
     const loadData = async () => {
-      if (projectId) {
-        await fetchProject(parseInt(projectId));
+      if (selectedProjectId) {
+        await fetchProject(selectedProjectId);
         setLoading(true);
         try {
           const url = selectedCrawlId
-            ? `/dashboard/${projectId}?crawlId=${selectedCrawlId}`
-            : `/dashboard/${projectId}`;
+            ? `/dashboard/${selectedProjectId}?crawlId=${selectedCrawlId}`
+            : `/dashboard/${selectedProjectId}`;
           const response = await apiClient.get(url);
           setDashboardData(response.data);
         } catch (error) {
@@ -67,7 +66,7 @@ export default function Dashboard() {
       }
     };
     loadData();
-  }, [projectId, fetchProject, selectedCrawlId]);
+  }, [selectedProjectId, fetchProject, selectedCrawlId]);
 
   const stats = dashboardData?.stats;
   const crawl = dashboardData?.crawl;
@@ -123,7 +122,7 @@ export default function Dashboard() {
             premium SEO insights and issue tracking.
           </p>
           <Link
-            to={`/crawl/live/${projectId}`}
+            to={`/crawl/live`}
             className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-1"
           >
             Start Initial Audit

@@ -1,8 +1,7 @@
-import { ReactNode, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { useProjectStore } from "../../store/projectStore";
+import { useUIStore } from "../../store/uiStore";
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,20 +14,7 @@ export default function Layout({
   title = "Dashboard",
   isOnboarding = false,
 }: LayoutProps) {
-  const { projectId } = useParams<{ projectId: string }>();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { setSelectedProjectId, fetchProject, currentProject } =
-    useProjectStore();
-
-  useEffect(() => {
-    if (projectId) {
-      const id = parseInt(projectId);
-      setSelectedProjectId(id);
-      if (!currentProject || currentProject.id !== id) {
-        fetchProject(id);
-      }
-    }
-  }, [projectId, setSelectedProjectId, fetchProject, currentProject]);
+  const { isSidebarOpen, setSidebarOpen } = useUIStore();
 
   if (isOnboarding) {
     return (
@@ -47,14 +33,14 @@ export default function Layout({
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
-        <Topbar title={title} onMenuClick={() => setIsSidebarOpen(true)} />
+        <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="flex-1 p-4 md:p-8">{children}</main>
 

@@ -25,7 +25,12 @@ export const useProjectStore = create<ProjectState>((set) => ({
   initialized: false,
   error: null,
 
-  setSelectedProjectId: (id: number | null) => set({ selectedProjectId: id }),
+  setSelectedProjectId: (id: number | null) =>
+    set((state) => ({
+      selectedProjectId: id,
+      currentProject:
+        state.projects.find((p) => p.id === id) || state.currentProject,
+    })),
 
   fetchProjects: async () => {
     set({ loading: true, error: null });

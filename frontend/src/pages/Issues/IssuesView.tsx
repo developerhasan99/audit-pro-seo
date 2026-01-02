@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
+import { useProjectStore } from "../../store/projectStore";
 import Layout from "../../components/Layout/Layout";
 import Loading from "../../components/Common/Loading";
 import Pagination from "../../components/Common/Pagination";
 import apiClient from "../../api/client";
 
 export default function IssuesView() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProjectId } = useProjectStore();
   const [searchParams] = useSearchParams();
   const issueType = searchParams.get("type");
 
@@ -18,16 +19,17 @@ export default function IssuesView() {
 
   useEffect(() => {
     const loadIssues = async () => {
+      if (!selectedProjectId) return;
       try {
         console.log(
           "Loading issues for project:",
-          projectId,
+          selectedProjectId,
           "type:",
           issueType,
           "page:",
           page
         );
-        const response = await apiClient.get(`/issues/${projectId}`, {
+        const response = await apiClient.get(`/issues/${selectedProjectId}`, {
           params: { issueType, page, limit },
         });
         console.log("API Response:", response.data);
@@ -44,7 +46,7 @@ export default function IssuesView() {
       }
     };
     loadIssues();
-  }, [projectId, issueType, page]);
+  }, [selectedProjectId, issueType, page]);
 
   if (loading) {
     return (
@@ -60,7 +62,7 @@ export default function IssuesView() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          to={`/issues/${projectId}`}
+          to={`/issues`}
           className="text-primary-600 hover:text-primary-700 text-sm"
         >
           ← Back to Issues
@@ -103,7 +105,7 @@ export default function IssuesView() {
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {issue.pageReport ? (
                         <Link
-                          to={`/resources/${projectId}/${issue.pageReport.id}`}
+                          to={`/resources/${issue.pageReport.id}`}
                           className="text-primary-600 hover:text-primary-700"
                         >
                           {issue.pageReport.url}

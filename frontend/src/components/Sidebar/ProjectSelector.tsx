@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useProjectStore } from "../../store/projectStore";
-import { ChevronDown, Plus, Globe, Check, SquareGanttIcon } from "lucide-react";
+import { ChevronDown, Globe, Check, SquareGanttIcon } from "lucide-react";
 
 interface ProjectSelectorProps {
   onClose?: () => void;
@@ -9,22 +9,31 @@ interface ProjectSelectorProps {
 
 export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const {
-    projects,
-    currentProject,
-    fetchProjects,
-    fetchProject,
-    setSelectedProjectId,
-  } = useProjectStore();
+
+  const { projects, currentProject, setSelectedProjectId } = useProjectStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (projects.length === 0) {
-      fetchProjects();
+  const getDisplayName = (url: string) => {
+    try {
+      const hostname = new URL(url).hostname;
+      return hostname.replace("www.", "");
+    } catch (e) {
+      return url;
     }
-  }, [projects.length, fetchProjects]);
+  };
+
+  const handleProjectSelect = (projectId: number) => {
+    setSelectedProjectId(projectId);
+    setIsOpen(false);
+    if (onClose) onClose();
+  };
+
+  const handleManageProject = () => {
+    navigate("/projects");
+    setIsOpen(false);
+    if (onClose) onClose();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -38,35 +47,6 @@ export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleProjectSelect = (projectId: number) => {
-    setSelectedProjectId(projectId);
-    if (location.pathname === "/recent-audits") {
-      fetchProject(projectId);
-      setIsOpen(false);
-      if (onClose) onClose();
-      return;
-    }
-
-    navigate(`/dashboard/${projectId}`);
-    setIsOpen(false);
-    if (onClose) onClose();
-  };
-
-  const handleAddProject = () => {
-    navigate("/projects");
-    setIsOpen(false);
-    if (onClose) onClose();
-  };
-
-  const getDisplayName = (url: string) => {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.replace("www.", "");
-    } catch (e) {
-      return url;
-    }
-  };
 
   return (
     <div className="relative px-4 mb-2" ref={dropdownRef}>
@@ -144,7 +124,7 @@ export default function ProjectSelector({ onClose }: ProjectSelectorProps) {
           </div>
 
           <button
-            onClick={handleAddProject}
+            onClick={handleManageProject}
             className="w-full flex items-center space-x-3 p-4 bg-slate-800 border-t border-slate-700 hover:bg-slate-700 transition-colors group"
           >
             <div className="w-7 h-7 rounded-md bg-indigo-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">

@@ -1,11 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { useProjectStore } from "../../store/projectStore";
 import {
   LayoutDashboard,
   Search,
   Network,
-  ClipboardList,
-  Settings,
   ShieldCheck,
   Zap,
   ChevronRight,
@@ -16,15 +13,11 @@ import {
 } from "lucide-react";
 import ProjectSelector from "../Sidebar/ProjectSelector";
 
-interface SidebarProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-}
+import { useUIStore } from "../../store/uiStore";
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar() {
   const location = useLocation();
-  const { selectedProjectId } = useProjectStore();
-  const projectIdStr = selectedProjectId?.toString();
+  const { isSidebarOpen, setSidebarOpen } = useUIStore();
 
   const isActive = (path: string) => {
     return (
@@ -39,7 +32,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {
           name: "Overview",
           icon: LayoutDashboard,
-          path: projectIdStr ? `/dashboard/${projectIdStr}` : "/",
+          path: `/dashboard`,
         },
         {
           name: "Recent Audits",
@@ -49,7 +42,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {
           name: "New Audit",
           icon: ScanSearch,
-          path: projectIdStr ? `/crawl/live/${projectIdStr}` : "/",
+          path: `/crawl/live`,
         },
       ],
     },
@@ -59,22 +52,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {
           name: "Issues Explorer",
           icon: ShieldCheck,
-          path: projectIdStr ? `/issues/${projectIdStr}` : "#",
+          path: `/issues`,
         },
         {
           name: "Data Explorer",
           icon: Search,
-          path: projectIdStr ? `/explorer/${projectIdStr}` : "#",
+          path: `/explorer`,
         },
         {
           name: "Site Structure",
           icon: Network,
-          path: projectIdStr ? `/site-structure/${projectIdStr}` : "#",
+          path: `/site-structure`,
         },
         {
           name: "Export Data",
           icon: Download,
-          path: `/export/${projectIdStr}`,
+          path: `/export`,
         },
       ],
     },
@@ -84,7 +77,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     <aside
       className={`
       w-64 bg-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 z-50 transition-transform duration-300 lg:translate-x-0
-      ${isOpen ? "translate-x-0" : "-translate-x-full"}
+      ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
     `}
     >
       {/* Brand & Close Button */}
@@ -98,7 +91,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </span>
         </div>
         <button
-          onClick={onClose}
+          onClick={() => setSidebarOpen(false)}
           className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors"
         >
           <X className="w-6 h-6" />
@@ -106,7 +99,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       {/* Project Selector */}
-      <ProjectSelector onClose={onClose} />
+      <ProjectSelector onClose={() => setSidebarOpen(false)} />
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -122,7 +115,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <Link
                     key={item.name}
                     to={item.path}
-                    onClick={onClose}
+                    onClick={() => setSidebarOpen(false)}
                     className={`
                       w-full flex items-center justify-between space-x-3 px-4 py-3 rounded-xl transition-all duration-200
                       ${

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useProjectStore } from "../../store/projectStore";
 import { useCrawlStore } from "../../store/crawlStore";
 import Layout from "../../components/Layout/Layout";
 import apiClient from "../../api/client";
@@ -12,7 +13,6 @@ import {
   Play,
   CheckCircle2,
   Layers,
-  Database,
 } from "lucide-react";
 
 interface StatusUpdate {
@@ -21,7 +21,7 @@ interface StatusUpdate {
 }
 
 export default function CrawlLive() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProjectId } = useProjectStore();
   const navigate = useNavigate();
   const { setSelectedCrawlId } = useCrawlStore();
   const [crawlStatus, setCrawlStatus] = useState<any>(null);
@@ -53,7 +53,7 @@ export default function CrawlLive() {
 
       if (
         message.type === "CRAWL_STARTED" &&
-        message.payload.projectId === parseInt(projectId!)
+        message.payload.projectId === selectedProjectId
       ) {
         setCrawlStatus((prev: any) => ({ ...prev, crawling: true }));
         addActivity("Crawl engine started sequentially.");
@@ -61,14 +61,14 @@ export default function CrawlLive() {
 
       if (
         message.type === "CRAWL_STATUS_UPDATE" &&
-        message.payload.projectId === parseInt(projectId!)
+        message.payload.projectId === selectedProjectId
       ) {
         addActivity(message.payload.message);
       }
 
       if (
         message.type === "CRAWL_PROGRESS" &&
-        message.payload.projectId === parseInt(projectId!)
+        message.payload.projectId === selectedProjectId
       ) {
         setCrawlStatus(message.payload);
         if (message.payload.lastUrl) {
@@ -83,7 +83,7 @@ export default function CrawlLive() {
 
       if (
         message.type === "CRAWL_COMPLETED" &&
-        message.payload.projectId === parseInt(projectId!)
+        message.payload.projectId === selectedProjectId
       ) {
         setCrawlStatus((prev: any) => ({ ...prev, crawling: false }));
         addActivity("Crawl operation finished successfully.");
@@ -94,7 +94,7 @@ export default function CrawlLive() {
 
       if (
         message.type === "CRAWL_STOPPED" &&
-        message.payload.projectId === parseInt(projectId!)
+        message.payload.projectId === selectedProjectId
       ) {
         setCrawlStatus((prev: any) => ({ ...prev, crawling: false }));
         addActivity("Crawl operation was manually stopped.");
@@ -106,12 +106,15 @@ export default function CrawlLive() {
       console.error("WebSocket error:", error);
       addActivity("Connection error occurred.");
     };
-  }, [projectId, navigate, addActivity]);
+  }, [selectedProjectId, navigate, addActivity]);
 
   useEffect(() => {
     const fetchStatus = async () => {
+      if (!selectedProjectId) return;
       try {
-        const response = await apiClient.get(`/crawl/status/${projectId}`);
+        const response = await apiClient.get(
+          `/crawl/status/${selectedProjectId}`
+        );
         setCrawlStatus(response.data);
 
         if (response.data.crawling) {
@@ -131,12 +134,15 @@ export default function CrawlLive() {
         wsRef.current = null;
       }
     };
-  }, [projectId, connectWebSocket, addActivity]);
+  }, [selectedProjectId, connectWebSocket, addActivity]);
 
   const handleStart = async () => {
+    if (!selectedProjectId) return;
     try {
       addActivity("Initiating crawl request...");
-      const response = await apiClient.post(`/crawl/start/${projectId}`);
+      const response = await apiClient.post(
+        `/crawl/start/${selectedProjectId}`
+      );
       if (response.data.crawlId) {
         setSelectedCrawlId(response.data.crawlId);
       }
@@ -149,10 +155,11 @@ export default function CrawlLive() {
   };
 
   const handleStop = async () => {
+    if (!selectedProjectId) return;
     setStopping(true);
     try {
       addActivity("Requesting crawl suspension...");
-      await apiClient.post(`/crawl/stop/${projectId}`);
+      await apiClient.post(`/crawl/stop/${selectedProjectId}`);
     } catch (error) {
       console.error("Failed to stop crawl:", error);
       setStopping(false);
@@ -275,7 +282,7 @@ export default function CrawlLive() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/dashboard/${projectId}`)}
+                  onClick={() => navigate(`/dashboard`)}
                   className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition-all shadow-sm active:scale-95"
                 >
                   <span>View Dashboard</span>

@@ -1,47 +1,48 @@
-import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useCrawlStore } from '../../store/crawlStore';
-import Layout from '../../components/Layout/Layout';
-import Loading from '../../components/Common/Loading';
-import Pagination from '../../components/Common/Pagination';
-import CrawlSelector from '../../components/Common/CrawlSelector';
-import apiClient from '../../api/client';
-
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useCrawlStore } from "../../store/crawlStore";
+import { useProjectStore } from "../../store/projectStore";
+import Layout from "../../components/Layout/Layout";
+import Loading from "../../components/Common/Loading";
+import Pagination from "../../components/Common/Pagination";
+import CrawlSelector from "../../components/Common/CrawlSelector";
+import apiClient from "../../api/client";
 
 export default function Explorer() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { selectedProjectId } = useProjectStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCrawlId } = useCrawlStore();
-  
+
   const [pageReports, setPageReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [page, setPage] = useState(parseInt(searchParams.get('page') || '1'));
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [total, setTotal] = useState(0);
   const limit = 50;
 
   useEffect(() => {
     const loadPages = async () => {
+      if (!selectedProjectId) return;
       setLoading(true);
       try {
-        const response = await apiClient.get(`/explorer/${projectId}`, {
+        const response = await apiClient.get(`/explorer/${selectedProjectId}`, {
           params: { search, page, limit, crawlId: selectedCrawlId },
         });
         setPageReports(response.data.pageReports);
         setTotal(response.data.total);
       } catch (error) {
-        console.error('Failed to load pages:', error);
+        console.error("Failed to load pages:", error);
       } finally {
         setLoading(false);
       }
     };
     loadPages();
-  }, [projectId, search, page, selectedCrawlId]);
+  }, [selectedProjectId, search, page, selectedCrawlId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    setSearchParams({ search, page: '1' });
+    setSearchParams({ search, page: "1" });
   };
 
   if (loading) {
@@ -58,8 +59,10 @@ export default function Explorer() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between space-y-4 md:space-y-0">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">URL Explorer</h1>
-          {projectId && <CrawlSelector projectId={parseInt(projectId)} />}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            URL Explorer
+          </h1>
+          {selectedProjectId && <CrawlSelector />}
         </div>
 
         {/* Search */}
@@ -114,16 +117,18 @@ export default function Explorer() {
                     </a>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {pr.title || '-'}
+                    {pr.title || "-"}
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`px-2 py-1 rounded ${
-                      pr.statusCode >= 200 && pr.statusCode < 300
-                        ? 'bg-green-100 text-green-800'
-                        : pr.statusCode >= 300 && pr.statusCode < 400
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded ${
+                        pr.statusCode >= 200 && pr.statusCode < 300
+                          ? "bg-green-100 text-green-800"
+                          : pr.statusCode >= 300 && pr.statusCode < 400
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }`}
+                    >
                       {pr.statusCode}
                     </span>
                   </td>

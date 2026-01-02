@@ -66,7 +66,6 @@ const queryClient = new QueryClient();
 function App() {
   const { user, initialized: authInitialized, checkAuth } = useAuthStore();
   const { initialized: projectInitialized, fetchProjects } = useProjectStore();
-  const { projects, error } = useProjectStore();
 
   useEffect(() => {
     checkAuth();
@@ -113,7 +112,7 @@ function App() {
             element={
               user ? (
                 <RequireProject>
-                  <Navigate to={`/dashboard/${projects[0].id}`} />
+                  <Navigate to={`/dashboard`} />
                 </RequireProject>
               ) : (
                 <Navigate to="/signin" />
@@ -145,7 +144,7 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/:projectId"
+            path="/dashboard"
             element={
               user ? (
                 <RequireProject>
@@ -157,7 +156,7 @@ function App() {
             }
           />
           <Route
-            path="/issues/:projectId"
+            path="/issues"
             element={
               user ? (
                 <RequireProject>
@@ -169,7 +168,7 @@ function App() {
             }
           />
           <Route
-            path="/issues/:projectId/view"
+            path="/issues/view"
             element={
               user ? (
                 <RequireProject>
@@ -181,7 +180,7 @@ function App() {
             }
           />
           <Route
-            path="/explorer/:projectId"
+            path="/explorer"
             element={
               user ? (
                 <RequireProject>
@@ -193,7 +192,7 @@ function App() {
             }
           />
           <Route
-            path="/resources/:projectId/:pageReportId"
+            path="/resources/:pageReportId"
             element={
               user ? (
                 <RequireProject>
@@ -205,7 +204,7 @@ function App() {
             }
           />
           <Route
-            path="/export/:projectId"
+            path="/export"
             element={
               user ? (
                 <RequireProject>
@@ -217,7 +216,7 @@ function App() {
             }
           />
           <Route
-            path="/crawl/live/:projectId"
+            path="/crawl/live"
             element={
               user ? (
                 <RequireProject>
@@ -229,7 +228,7 @@ function App() {
             }
           />
           <Route
-            path="/site-structure/:projectId"
+            path="/site-structure"
             element={
               user ? (
                 <RequireProject>
