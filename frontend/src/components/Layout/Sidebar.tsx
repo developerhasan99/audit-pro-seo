@@ -78,13 +78,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         },
       ],
     },
-    {
-      title: "Maintenance",
-      items: [
-        { name: "Crawl Logs", icon: ClipboardList, path: "#" },
-        { name: "Settings", icon: Settings, path: "/account" },
-      ],
-    },
   ];
 
   return (
