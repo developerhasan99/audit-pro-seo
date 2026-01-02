@@ -25,8 +25,12 @@ app.use(compression() as any);
 app.use(morgan(config.env === "development" ? "dev" : "combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
+// Latency simulation middleware
+if (config.server.latencyMs > 0) {
+  app.use((_req, _res, next) => {
+    setTimeout(next, config.server.latencyMs);
+  });
+}
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
@@ -55,6 +59,7 @@ const startServer = async (): Promise<void> => {
 
     // Start listening
     httpServer.listen(config.server.port, () => {
+      console.log(`Latency simulation: ${config.server.latencyMs}ms`);
       console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║

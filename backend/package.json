@@ -4,7 +4,7 @@
   "description": "Audit Pro SEO Backend - Node.js SEO Auditing Tool",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "nodemon --watch .env --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest",
